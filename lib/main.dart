@@ -102,8 +102,8 @@ void main() async {
   // Use debug provider for sideloaded APKs (direct sharing / beta testing).
   // Switch back to playIntegrity when publishing to Play Store.
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.debug,
-    appleProvider:   kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
+    androidProvider: kReleaseMode ? AndroidProvider.playIntegrity : AndroidProvider.debug,
+    appleProvider:   kReleaseMode ? AppleProvider.deviceCheck : AppleProvider.debug,
   );
 
   // ── Firebase Service init (offline persistence + FCM permissions) ─────────

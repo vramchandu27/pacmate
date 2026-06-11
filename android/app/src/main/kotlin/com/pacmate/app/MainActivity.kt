@@ -1,4 +1,4 @@
-package com.example.pacmate
+package com.pacmate.app
 
 import io.flutter.embedding.android.FlutterActivity
 

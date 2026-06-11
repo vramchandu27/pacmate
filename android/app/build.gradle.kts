@@ -1,4 +1,5 @@
 import java.util.Base64
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -8,8 +9,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// ── Read signing credentials from key.properties (never committed) ────────────
+val keyPropertiesFile = rootProject.file("key.properties")
+val keyProperties = Properties()
+if (keyPropertiesFile.exists()) {
+    keyPropertiesFile.inputStream().use { keyProperties.load(it) }
+}
+
 android {
-    namespace = "com.example.pacmate"
+    namespace = "com.pacmate.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -24,13 +32,13 @@ android {
     }
 
     defaultConfig {
-        
-        applicationId = "com.example.pacmate"
+        applicationId = "com.pacmate.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
+        // Inject Google Maps key from --dart-define at build time
         val dartDefines: Map<String, String> = (project.findProperty("dart-defines") as? String)
             ?.split(",")
             ?.associate { entry ->
@@ -43,16 +51,47 @@ android {
             dartDefines["GOOGLE_MAPS_KEY"] ?: ""
     }
 
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
+    signingConfigs {
+        create("release") {
+            if (keyPropertiesFile.exists()) {
+                keyAlias     = keyProperties["keyAlias"]     as String
+                keyPassword  = keyProperties["keyPassword"]  as String
+                storeFile    = file(keyProperties["storeFile"] as String)
+                storePassword = keyProperties["storePassword"] as String
+            }
         }
     }
 
-// Disable Crashlytics mapping file upload — avoids SSL errors on this machine.
-tasks.whenTaskAdded {
-    if (name.startsWith("uploadCrashlyticsMappingFile")) enabled = false
-}
+    buildTypes {
+        release {
+            // Use release keystore when key.properties exists, else debug for local testing
+            signingConfig = if (keyPropertiesFile.exists())
+                signingConfigs.getByName("release")
+            else
+                signingConfigs.getByName("debug")
+
+            // R8 full-mode minification + resource shrinking
+            isMinifyEnabled   = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
+            // Disable debug symbols
+            isDebuggable = false
+        }
+        debug {
+            isMinifyEnabled   = false
+            isShrinkResources = false
+            isDebuggable      = true
+        }
+    }
+
+    // Disable Crashlytics mapping file upload — avoids SSL errors on this machine.
+    tasks.whenTaskAdded {
+        if (name.startsWith("uploadCrashlyticsMappingFile")) enabled = false
+    }
 }
 
 flutter {
