@@ -1,0 +1,39 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": ["node_modules", ".git"]
+    }
+  ],
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "pacmate-24054",
+          "appId": "1:111745115688:android:8aea472337797feba8771d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "pacmate-24054",
+          "configurations": {
+            "android": "1:111745115688:android:8aea472337797feba8771d",
+            "ios": "1:111745115688:ios:4ef002c4cb131361a8771d",
+            "macos": "1:111745115688:ios:4ef002c4cb131361a8771d",
+            "web": "1:111745115688:web:1686d2de4f0ba1a8a8771d",
+            "windows": "1:111745115688:web:6e750363dea60778a8771d"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // ── Users ──────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read:   if isAuth();
+      allow write:  if isOwner(userId);
+
+      // ── Trips (moved from root /trips) ──────────────────────────────────
+      match /trips/{tripId} {
+        allow read:           if isOwner(userId);
+        allow create:         if isOwner(userId);
+        allow update, delete: if isOwner(userId);
+      }
+
+      // ── Expenses (moved from root /expenses) ────────────────────────────
+      match /expenses/{expenseId} {
+        allow read:           if isOwner(userId);
+        allow create:         if isOwner(userId);
+        allow update, delete: if isOwner(userId);
+      }
+
+      // ── Packing Lists (moved from root /packingLists) ───────────────────
+      match /packingLists/{listId} {
+        allow read:   if isOwner(userId) ||
+                         request.auth.uid in resource.data.sharedWith;
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) ||
+                         request.auth.uid in resource.data.sharedWith;
+        allow delete: if isOwner(userId);
+      }
+
+      // ── Saved Gems ───────────────────────────────────────────────────────
+      match /savedGems/{gemId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ── Hidden Gems ────────────────────────────────────────────────────────
+    match /hiddenGems/{gemId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.addedBy == request.auth.uid;
+      allow update: if isAuth() && (
+        resource.data.addedBy == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['averageRating', 'ratingCount', 'upvotes', 'downvotes'])
+      );
+      allow delete: if isOwner(resource.data.addedBy);
+
+      match /ratings/{userId} {
+        allow read:  if isAuth();
+        allow write: if isOwner(userId);
+      }
+
+      match /likes/{userId} {
+        allow read:  if isAuth();
+        allow write: if isOwner(userId);
+      }
+    }
+
+    match /gemReviews/{reviewId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && request.resource.data.addedBy == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.addedBy);
+    }
+
+    // ── Chats ──────────────────────────────────────────────────────────────
+    match /chats/{chatId} {
+      allow read:   if isAuth() && request.auth.uid in resource.data.participants;
+      allow create: if isAuth() && request.auth.uid in request.resource.data.participants;
+      allow update, delete: if isAuth() && request.auth.uid in resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read, create: if isAuth() &&
+          request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow update, delete: if isOwner(resource.data.sentBy);
+      }
+    }
+
+    // ── Safety Alerts (read-only) ──────────────────────────────────────────
+    match /safetyAlerts/{alertId} {
+      allow read:  if isAuth();
+      allow write: if false;
+    }
+
+    // ── Medicines ──────────────────────────────────────────────────────────
+    match /medicines/{medicineId} {
+      allow read:   if isOwner(resource.data.userId);
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    // ── Family Links ───────────────────────────────────────────────────────
+    match /familyLinks/{linkId} {
+      allow read, update, delete: if isAuth() && (
+        resource.data.parentId == request.auth.uid ||
+        resource.data.childId  == request.auth.uid
+      );
+      allow create: if isAuth() && (
+        request.resource.data.parentId == request.auth.uid ||
+        request.resource.data.childId  == request.auth.uid
+      );
+    }
+
+    // ── Notifications ──────────────────────────────────────────────────────
+    // Personal: userId == uid. Broadcast: userId == 'broadcast'.
+    match /notifications/{notifId} {
+      allow read:   if isAuth() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.userId == 'broadcast'
+      );
+      allow update: if isAuth() && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      allow create: if isAuth() && (
+        request.resource.data.userId == request.auth.uid ||
+        request.resource.data.userId == 'broadcast'
+      );
+      allow delete: if false;
+    }
+
+    // ── Rate Limits (Cloud Functions only) ─────────────────────────────────
+    match /rateLimits/{docId} {
+      allow read, write: if false;
+    }
+
+    // ── AI Cache (read-only for clients) ───────────────────────────────────
+    match /aiCache/{cacheId} {
+      allow read:  if isAuth();
+      allow write: if false;
+    }
+
+    // ── Currency Cache (read-only for clients) ─────────────────────────────
+    match /currencyCache/{cacheId} {
+      allow read:  if isAuth();
+      allow write: if false;
+    }
+
+    // ── SOS Events ─────────────────────────────────────────────────────────
+    match /sosEvents/{eventId} {
+      allow read:   if isOwner(resource.data.userId);
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+  }
+}

@@ -1,0 +1,78 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# ─── SECRETS & CREDENTIALS — NEVER COMMIT ───────────────────────────────────
+# API key files (local dev fallbacks)
+dart_defines.json
+lib/core/config/dev_keys.dart
+
+# Firebase platform config — regenerate with: flutterfire configure
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+
+# Android signing credentials
+android/key.properties
+*.keystore
+*.jks
+
+# iOS signing / certificates
+*.p12
+*.pem
+*.mobileprovision
+*.cer
+*.certSigningRequest
+
+# Cloud Functions local secrets
+functions/.env
+functions/.env.*
+functions/.secret.*
+
+# General secret files
+.env
+.env.*
+secrets.json
+credentials.json
+service-account*.json
+firebase-adminsdk*.json
+
+# IDE launch config (may contain dart-define values with real keys)
+.vscode/launch.json
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release

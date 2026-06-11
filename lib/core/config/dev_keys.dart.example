@@ -1,0 +1,28 @@
+// ignore_for_file: constant_identifier_names
+// ─── HOW TO SET UP LOCAL DEVELOPMENT KEYS ────────────────────────────────────
+//
+// 1. Copy this file:  cp dev_keys.dart.example dev_keys.dart
+// 2. Fill in YOUR keys below (get them from the relevant console)
+// 3. dev_keys.dart is gitignored — your keys stay on your machine only
+//
+// NEVER put real keys in this .example file.
+// NEVER commit dev_keys.dart.
+//
+// In CI / production all keys are supplied via --dart-define:
+//   flutter run \
+//     --dart-define=GOOGLE_MAPS_KEY=YOUR_KEY
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Google Maps Android / iOS SDK key.
+/// Console: console.cloud.google.com → APIs & Services → Credentials
+/// Restrict: Application restrictions → Android/iOS → add your package + SHA-1
+const String kDevGoogleMapsKey = 'REPLACE_WITH_YOUR_MAPS_KEY';
+
+/// Exchange Rate API key (optional).
+/// Console: exchangerate-api.com → Dashboard
+const String kDevExchangeKey = '';
+
+// ── Keys that must NOT appear here ───────────────────────────────────────────
+// Gemini API key  → server-side only via Firebase Secret GEMINI_KEY
+// Places API key  → use the same Maps key above (already client-side for SDK)
+// Firebase config → run `flutterfire configure` to regenerate firebase_options.dart

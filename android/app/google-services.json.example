@@ -1,0 +1,35 @@
+{
+  "_comment": "SETUP: Download the real google-services.json from Firebase Console → Project Settings → Your Android App. This file is gitignored.",
+  "project_info": {
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "YOUR_PROJECT_ID",
+    "storage_bucket": "YOUR_PROJECT_ID.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "YOUR_ANDROID_APP_ID",
+        "android_client_info": {
+          "package_name": "com.yourcompany.pacmate"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "YOUR_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "YOUR_FIREBASE_ANDROID_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

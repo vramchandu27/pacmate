@@ -1,0 +1,36 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+          && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // ── Profile photos ─────────────────────────────────────────────────────
+    match /profile_photos/{userId}/{allPaths=**} {
+      allow read:  if isAuth();
+      allow write: if isOwner(userId) && isValidImage();
+    }
+
+    // ── Hidden Gem photos ──────────────────────────────────────────────────
+    match /gem_photos/{gemId}/{allPaths=**} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && isValidImage();
+    }
+
+    // ── Trip photos ────────────────────────────────────────────────────────
+    match /trip_photos/{tripId}/{allPaths=**} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && isValidImage();
+    }
+  }
+}
