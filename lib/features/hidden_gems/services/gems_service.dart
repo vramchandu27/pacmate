@@ -269,7 +269,7 @@ class GemsService {
       longitude: longitude,
     );
 
-    await _firebase.logGemAdded(category);
+    _firebase.logGemAdded(category);
     return docRef.id;
   }
 
@@ -507,7 +507,9 @@ final trendingGemsProvider =
   return ref.read(gemsServiceProvider).getTrendingGems(category: category);
 });
 
-/// Resolves the device's current position once. Returns null if permission denied.
+/// Resolves the device's current position once. Returns null only if permission denied.
+/// Tries medium accuracy first (20s), then falls back to low accuracy (15s) so slow
+/// GPS receivers on budget phones don't silently return null.
 final currentPositionProvider = FutureProvider<Position?>((ref) async {
   try {
     var permission = await Geolocator.checkPermission();
@@ -518,12 +520,22 @@ final currentPositionProvider = FutureProvider<Position?>((ref) async {
         permission == LocationPermission.deniedForever) {
       return null;
     }
-    return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.medium,
-        timeLimit: Duration(seconds: 10),
-      ),
-    );
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+    } catch (_) {
+      // Medium accuracy timed out — fall back to low accuracy (network-based).
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+    }
   } catch (_) {
     return null;
   }

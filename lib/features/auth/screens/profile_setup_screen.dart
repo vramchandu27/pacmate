@@ -25,7 +25,30 @@ const _avatars = [
   {'emoji': '🎒', 'color': 0xFFF59E0B},
 ];
 
-const _currencies = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'JPY', 'AUD'];
+const _currencies = [
+  'INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'JPY', 'AUD',
+  'CAD', 'CHF', 'NZD', 'THB', 'MYR', 'IDR', 'PHP', 'VND',
+  'KRW', 'HKD', 'TRY', 'ZAR', 'BRL', 'MXN', 'SEK', 'NOK',
+];
+
+const _countries = [
+  'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Armenia', 'Australia',
+  'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belgium', 'Bhutan',
+  'Bolivia', 'Bosnia and Herzegovina', 'Brazil', 'Cambodia', 'Canada',
+  'Chile', 'China', 'Colombia', 'Croatia', 'Czech Republic', 'Denmark',
+  'Egypt', 'Ethiopia', 'Finland', 'France', 'Georgia', 'Germany', 'Ghana',
+  'Greece', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq',
+  'Ireland', 'Israel', 'Italy', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya',
+  'Kuwait', 'Kyrgyzstan', 'Laos', 'Lebanon', 'Malaysia', 'Maldives',
+  'Mexico', 'Mongolia', 'Morocco', 'Myanmar', 'Nepal', 'Netherlands',
+  'New Zealand', 'Nigeria', 'Norway', 'Oman', 'Pakistan', 'Peru',
+  'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia',
+  'Saudi Arabia', 'Senegal', 'Serbia', 'Singapore', 'South Africa',
+  'South Korea', 'Spain', 'Sri Lanka', 'Sweden', 'Switzerland', 'Taiwan',
+  'Tajikistan', 'Tanzania', 'Thailand', 'Turkey', 'Turkmenistan', 'Uganda',
+  'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States',
+  'Uzbekistan', 'Vietnam', 'Yemen', 'Zimbabwe',
+];
 
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
@@ -44,7 +67,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   int _selectedAvatar = 0;
   File? _photoFile;
   String _selectedCurrency = 'INR';
-  bool _isSeniorMode = false;
+  String? _selectedCountry;
 
   @override
   void initState() {
@@ -91,6 +114,19 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedCountry == null || _selectedCountry!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select your home country',
+            style: TextStyle(fontFamily: 'Poppins'),
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     setState(() => _isSaving = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
@@ -105,10 +141,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           'fullName': _nameCtrl.text.trim(),
           'phone': _phoneCtrl.text.trim(),
           'currency': _selectedCurrency,
+          'homeCountry': _selectedCountry!,
           'travelType': 'solo',
           'avatar': _avatars[_selectedAvatar]['emoji'],
           'photoUrl': ?photoUrl,
-          'seniorMode': _isSeniorMode,
         }),
         authService.markProfileComplete(),
       ]);
@@ -167,7 +203,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     const SizedBox(height: 12),
                     _buildCurrencyChips(),
                     const SizedBox(height: 28),
-                    _buildSeniorToggle(),
+                    _sectionLabelRequired('Home country'),
+                    const SizedBox(height: 12),
+                    _buildCountryDropdown(),
                     SizedBox(height: 32 + bottomPad),
                   ],
                 ),
@@ -217,18 +255,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         Icons.arrow_back_ios_new_rounded,
                         color: Colors.white,
                         size: 18,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go(AppRoutes.home),
-                    child: const Text(
-                      'Skip',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white70,
                       ),
                     ),
                   ),
@@ -427,104 +453,86 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // ── Currency chips ───────────────────────────────────────────────────────────
+  // ── Currency dropdown ────────────────────────────────────────────────────────
 
   Widget _buildCurrencyChips() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: _currencies.map((c) {
-        final isSelected = _selectedCurrency == c;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedCurrency = c),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.lightOutline,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary.withAlpha(60),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      )
-                    ]
-                  : [],
-            ),
-            child: Text(
-              c,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.navy,
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.lightBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.lightOutline),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedCurrency,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: AppColors.lightOnSurfaceVar),
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.navy,
           ),
-        );
-      }).toList(),
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          items: _currencies.map((c) {
+            return DropdownMenuItem(
+              value: c,
+              child: Text(c),
+            );
+          }).toList(),
+          onChanged: (v) {
+            if (v != null) setState(() => _selectedCurrency = v);
+          },
+        ),
+      ),
     );
   }
 
-  // ── Senior mode toggle ───────────────────────────────────────────────────────
+  // ── Country dropdown ─────────────────────────────────────────────────────────
 
-  Widget _buildSeniorToggle() {
-    return GestureDetector(
-      onTap: () => setState(() => _isSeniorMode = !_isSeniorMode),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: _isSeniorMode
-              ? AppColors.teal.withAlpha(18)
-              : AppColors.lightBackground,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _isSeniorMode ? AppColors.teal : AppColors.lightOutline,
-            width: _isSeniorMode ? 1.5 : 1,
-          ),
+  Widget _buildCountryDropdown() {
+    final isSelected = _selectedCountry != null;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.lightBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected ? AppColors.primary : AppColors.danger.withAlpha(180),
+          width: isSelected ? 1 : 1.2,
         ),
-        child: Row(
-          children: [
-            const Text('🌿', style: TextStyle(fontSize: 24)),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Senior Mode',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.navy,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Medicine reminders, family tracking & comfort tips',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      color: AppColors.lightOnSurfaceVar,
-                    ),
-                  ),
-                ],
-              ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedCountry,
+          isExpanded: true,
+          hint: const Text(
+            'Select your country *',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 14,
+              color: AppColors.lightOnSurfaceVar,
             ),
-            Switch(
-              value: _isSeniorMode,
-              onChanged: (v) => setState(() => _isSeniorMode = v),
-              activeThumbColor: AppColors.teal,
-              activeTrackColor: AppColors.teal.withAlpha(80),
-            ),
-          ],
+          ),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: AppColors.lightOnSurfaceVar),
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.navy,
+          ),
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          items: _countries.map((c) {
+            return DropdownMenuItem(value: c, child: Text(c));
+          }).toList(),
+          onChanged: (v) {
+            if (v != null) setState(() => _selectedCountry = v);
+          },
         ),
       ),
     );
@@ -533,13 +541,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   // ── Save button ──────────────────────────────────────────────────────────────
 
   Widget _buildSaveButton(double bottomPad) {
+    final effectiveBottom = (bottomPad > 0 ? bottomPad + 8 : 0) + 24.0;
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        12,
-        20,
-        bottomPad > 0 ? bottomPad + 8 : 24,
-      ),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, effectiveBottom),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -604,6 +608,32 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         fontWeight: FontWeight.w700,
         color: AppColors.navy,
       ),
+    );
+  }
+
+  Widget _sectionLabelRequired(String text) {
+    return Row(
+      children: [
+        Text(
+          text,
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.navy,
+          ),
+        ),
+        const SizedBox(width: 4),
+        const Text(
+          'Required',
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.danger,
+          ),
+        ),
+      ],
     );
   }
 }

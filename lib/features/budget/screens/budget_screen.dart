@@ -33,39 +33,36 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     super.dispose();
   }
 
-  // Active first, then ongoing, then upcoming, then past.
+  // In-progress first, then upcoming, then past.
   static List<BudgetModel> _sortByDate(List<BudgetModel> trips) {
     final now   = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    final active = trips.where((t) => t.isActive).toList();
-
-    // Ongoing — inactive, not completed, started but not yet ended (date-only)
-    final ongoing = trips.where((t) {
-      if (t.isActive || t.completedAt != null) return false;
+    // In-progress — date range includes today and not yet completed
+    final inProgress = trips.where((t) {
+      if (t.completedAt != null) return false;
       final s = DateTime(t.startDate.year, t.startDate.month, t.startDate.day);
       final e = DateTime(t.endDate.year,   t.endDate.month,   t.endDate.day);
       return !s.isAfter(today) && !e.isBefore(today);
     }).toList()
       ..sort((a, b) => a.endDate.compareTo(b.endDate));
 
-    // Upcoming — inactive, not completed, start date still in future
+    // Upcoming — not completed, start date in the future
     final upcoming = trips.where((t) {
-      if (t.isActive || t.completedAt != null) return false;
+      if (t.completedAt != null) return false;
       final s = DateTime(t.startDate.year, t.startDate.month, t.startDate.day);
       return s.isAfter(today);
     }).toList()
       ..sort((a, b) => a.startDate.compareTo(b.startDate));
 
-    // Past — inactive AND (completed OR end date before today)
+    // Past — completed OR end date before today
     final past = trips.where((t) {
-      if (t.isActive) return false;
       final e = DateTime(t.endDate.year, t.endDate.month, t.endDate.day);
       return e.isBefore(today) || t.completedAt != null;
     }).toList()
       ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
-    return [...active, ...ongoing, ...upcoming, ...past];
+    return [...inProgress, ...upcoming, ...past];
   }
 
   void _showCreateTripSheet() {
@@ -355,12 +352,6 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: _showCreateTripSheet,
-            tooltip: 'New Trip',
-            icon: const Icon(Icons.add_circle_outline_rounded,
-                color: AppColors.primary),
-          ),
           Consumer(
             builder: (ctx, ref, _) {
               final trips = _sortByDate(
@@ -394,15 +385,24 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
           // On first data load, jump to the active trip in the sorted list.
           if (!_didInitialScroll) {
             _didInitialScroll = true;
-            final activeIdx = trips.indexWhere((t) => t.isActive);
-            if (activeIdx > 0) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && _pageCtrl.hasClients) {
-                  _pageCtrl.jumpToPage(activeIdx);
-                  setState(() => _currentPage = activeIdx);
-                }
-              });
-            }
+            final now0 = DateTime.now();
+            final today0 = DateTime(now0.year, now0.month, now0.day);
+            final activeIdx = trips.indexWhere((t) {
+              if (t.completedAt != null) return false;
+              final s = DateTime(t.startDate.year, t.startDate.month, t.startDate.day);
+              final e = DateTime(t.endDate.year, t.endDate.month, t.endDate.day);
+              return !s.isAfter(today0) && !e.isBefore(today0);
+            });
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              // Seed provider with the trip shown on the initial page.
+              final startPage = (activeIdx > 0 ? activeIdx : 0).clamp(0, trips.length - 1);
+              ref.read(selectedCarouselTripProvider.notifier).state = trips[startPage];
+              if (activeIdx > 0 && _pageCtrl.hasClients) {
+                _pageCtrl.jumpToPage(activeIdx);
+                setState(() => _currentPage = activeIdx);
+              }
+            });
           }
 
           final safePage = _currentPage.clamp(0, trips.length - 1);
@@ -417,7 +417,12 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                 child: PageView.builder(
                   controller: _pageCtrl,
                   itemCount: trips.length,
-                  onPageChanged: (i) => setState(() => _currentPage = i),
+                  onPageChanged: (i) {
+                    setState(() => _currentPage = i);
+                    if (i < trips.length) {
+                      ref.read(selectedCarouselTripProvider.notifier).state = trips[i];
+                    }
+                  },
                   itemBuilder: (_, i) {
                     return AnimatedBuilder(
                       animation: _pageCtrl,
@@ -555,21 +560,18 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     // Use date-only comparisons so trips show correctly all day on start/end day.
     final tripStartDay = DateTime(trip.startDate.year, trip.startDate.month, trip.startDate.day);
     final tripEndDay   = DateTime(trip.endDate.year,   trip.endDate.month,   trip.endDate.day);
-    final isOngoing  = !trip.isActive && trip.completedAt == null &&
-                       !tripStartDay.isAfter(today) && !tripEndDay.isBefore(today);
-    final isUpcoming = !trip.isActive && trip.completedAt == null &&
-                       tripStartDay.isAfter(today);
+    final isInProgress = trip.completedAt == null &&
+                        !tripStartDay.isAfter(today) && !tripEndDay.isBefore(today);
+    final isUpcoming   = trip.completedAt == null && tripStartDay.isAfter(today);
 
     final pad      = (cardH * 0.095).clamp(12.0, 20.0);
     final destFz   = (cardH * 0.090).clamp(13.0, 18.0);
     final budgetFz = (cardH * 0.138).clamp(18.0, 27.0);
     final labelFz  = (cardH * 0.058).clamp(9.0, 12.0);
 
-    final isUpcomingActive = now.isBefore(trip.startDate);
-
-    if (trip.isActive) {
-      final badgeLabel = isUpcomingActive ? 'UPCOMING' : 'ACTIVE';
-      final badgeDot   = isUpcomingActive
+    if (isInProgress || trip.isActive) {
+      final badgeLabel = isInProgress ? 'ACTIVE' : 'UPCOMING';
+      final badgeDot   = isInProgress
           ? const Color(0xFFFFB74D)
           : const Color(0xFF69F0AE);
 
@@ -667,9 +669,11 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                     color: Colors.white,
                   ),
                 ),
-                if (trip.isActive && !now.isBefore(trip.startDate) && !today.isAfter(tripEndDay))
                 GestureDetector(
-                  onTap: () => context.push(AppRoutes.addExpense),
+                  onTap: () {
+                    ref.read(selectedCarouselTripProvider.notifier).state = trip;
+                    context.push(AppRoutes.addExpense, extra: trip);
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
@@ -757,30 +761,24 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
       );       // ClipRRect
     }
 
-    // Past / ongoing / upcoming card — solid gradient, works on light scaffold.
-    final List<Color> cardGradient = isOngoing
-        ? const [Color(0xFF0D47A1), Color(0xFF2563EB)]
-        : isUpcoming
-            ? const [Color(0xFF1A3A6B), Color(0xFF2563EB)]
-            : overBudget
-                ? const [Color(0xFF7F1010), Color(0xFFB71C1C)]
-                : const [Color(0xFF0D5C2E), Color(0xFF1E8449)];
+    // Upcoming / past / completed card
+    final List<Color> cardGradient = isUpcoming
+        ? const [Color(0xFF1A3A6B), Color(0xFF2563EB)]
+        : overBudget
+            ? const [Color(0xFF7F1010), Color(0xFFB71C1C)]
+            : const [Color(0xFF0D5C2E), Color(0xFF1E8449)];
 
-    final Color badgeDot = isOngoing
-        ? const Color(0xFF69F0AE)
-        : isUpcoming
-            ? const Color(0xFFFFB74D)
-            : overBudget
-                ? const Color(0xFFFF6B6B)
-                : const Color(0xFF69F0AE);
+    final Color badgeDot = isUpcoming
+        ? const Color(0xFFFFB74D)
+        : overBudget
+            ? const Color(0xFFFF6B6B)
+            : const Color(0xFF69F0AE);
 
-    final String badgeLabel = isOngoing
-        ? 'ONGOING'
-        : isUpcoming
-            ? 'UPCOMING'
-            : overBudget
-                ? 'OVER BUDGET'
-                : 'COMPLETED';
+    final String badgeLabel = isUpcoming
+        ? 'UPCOMING'
+        : overBudget
+            ? 'OVER BUDGET'
+            : 'COMPLETED';
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -870,14 +868,50 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                       color: Colors.white60),
                 ),
                 const Spacer(),
-                Text(
-                  _fmtMoney(trip.totalBudget, trip.currency),
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: budgetFz,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _fmtMoney(trip.totalBudget, trip.currency),
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: budgetFz,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        ref.read(selectedCarouselTripProvider.notifier).state = trip;
+                        context.push(AppRoutes.addExpense, extra: trip);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(35),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white54),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.add_rounded, size: 14, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Expense',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: labelFz,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(
@@ -986,13 +1020,19 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
         final sortedCategories = categoryTotals.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
 
+        final detailStart = DateTime(trip.startDate.year, trip.startDate.month, trip.startDate.day);
+        final detailEnd   = DateTime(trip.endDate.year,   trip.endDate.month,   trip.endDate.day);
+        final detailToday = DateTime(now.year, now.month, now.day);
+        final tripInProgress = trip.completedAt == null &&
+            !detailStart.isAfter(detailToday) && !detailEnd.isBefore(detailToday);
+
         final hp = w < 360 ? 14.0 : 20.0;
         return SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(hp, 20, hp, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (trip.isActive) ...[
+              if (tripInProgress) ...[
                 _buildTodaySpending(todaySpent, dailyBudget, trip.currency, w),
                 const SizedBox(height: 24),
               ] else ...[
@@ -1004,7 +1044,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                 const SizedBox(height: 24),
               ],
               _buildRecentExpenses(trip.id, expenses),
-              if (trip.isActive) ...[
+              if (tripInProgress) ...[
                 const SizedBox(height: 24),
                 _buildCompleteTripSection(trip),
               ],

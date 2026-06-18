@@ -20,6 +20,7 @@ class AppRoutes {
   static const String createTrip = '/budget/create-trip';
   static const String addExpense = '/budget/add-expense';
   static const String budgetReport = '/budget/report';
+  static const String allTrips    = '/budget/all-trips';
 
   // Packing
   static const String packing = '/packing';

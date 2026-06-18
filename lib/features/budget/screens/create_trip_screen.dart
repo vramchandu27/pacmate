@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../core/api/places_service.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/api/weather_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/destinations_data.dart';
 import '../../../shared/models/currency_data.dart';
@@ -152,20 +154,24 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
   Future<void> _searchPlaces(String query) async {
     setState(() => _isSearching = true);
     try {
-      final results = await ref
-          .read(placesServiceProvider)
-          .textSearch(query, type: 'locality');
+      // Open Meteo geocoding — cities and countries only, no stores/businesses.
+      final geoResults = await ref
+          .read(weatherServiceProvider)
+          .geocodeCities(query, count: 6);
       if (!mounted) return;
       setState(() => _isSearching = false);
-      if (results.isEmpty) return; // keep static results already showing
 
-      // Merge: API results first, then any static extras not covered
-      final merged = results.take(5).toList();
+      final merged = geoResults.map((r) {
+        final label = r.address.isNotEmpty ? '${r.name}, ${r.address}' : r.name;
+        return _localResult(label);
+      }).toList();
+
+      // Backfill with static matches not already covered.
       for (final s in kDestinations
           .where((d) => d.toLowerCase().contains(query.toLowerCase()))
           .take(6)) {
-        if (!merged.any((r) =>
-            r.name.toLowerCase().contains(s.split(',').first.toLowerCase()))) {
+        final cityFirst = s.split(',').first.toLowerCase();
+        if (!merged.any((r) => r.name.toLowerCase().contains(cityFirst))) {
           merged.add(_localResult(s));
         }
       }
@@ -371,6 +377,86 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
       return;
     }
 
+    // Check for overlapping trips
+    final existingTrips = ref.read(allTripsProvider).valueOrNull ?? [];
+    final newStart = DateTime(_startDate.year, _startDate.month, _startDate.day);
+    final newEnd   = DateTime(_endDate.year,   _endDate.month,   _endDate.day);
+
+    final conflict = existingTrips.where((t) {
+      if (t.completedAt != null) return false;
+      final tStart = DateTime(t.startDate.year, t.startDate.month, t.startDate.day);
+      final tEnd   = DateTime(t.endDate.year,   t.endDate.month,   t.endDate.day);
+      return !tStart.isAfter(newEnd) && !tEnd.isBefore(newStart);
+    }).firstOrNull;
+
+    if (conflict != null && mounted) {
+      final fmt = DateFormat('d MMM');
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 22),
+              SizedBox(width: 8),
+              Text(
+                'Trip Already Planned',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.navy,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'You already have a trip to ${conflict.destination} planned from '
+            '${fmt.format(conflict.startDate)} – ${fmt.format(conflict.endDate)}. '
+            'These dates overlap.\n\nDo you still want to create this trip?',
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 13,
+              color: AppColors.lightOnSurfaceVar,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text(
+                'Change Dates',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.lightOnSurfaceVar,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Create Anyway',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      if (!mounted) return;
+    }
+
     setState(() => _isLoading = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -388,7 +474,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
         _isLoading         = false;
       });
       await Future.delayed(const Duration(milliseconds: 2800));
-      if (mounted) context.pop();
+      if (mounted) context.go(AppRoutes.budget);
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
@@ -642,7 +728,6 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
                             RegExp(r'^\d+\.?\d{0,2}')),
                       ],
                       textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _submit(),
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: fzBody,
@@ -908,21 +993,28 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
                             height: 1.4,
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryAlpha10,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Taking you back...',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.primary,
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => context.go(AppRoutes.budget),
+                            icon: const Icon(Icons.dashboard_rounded, size: 18),
+                            label: const Text(
+                              'Go to Dashboard',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
                             ),
                           ),
                         ),

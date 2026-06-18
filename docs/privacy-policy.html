@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — PacMate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    header {
+      background: #1565C0;
+      color: #fff;
+      padding: 36px 24px 28px;
+      text-align: center;
+    }
+    header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+    header p  { font-size: 13px; opacity: 0.82; margin-top: 6px; }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1565C0;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-chip {
+      background: #e8f0fe;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 15px;
+    }
+
+    p { margin-bottom: 10px; color: #374151; }
+    p:last-child { margin-bottom: 0; }
+
+    ul, ol {
+      padding-left: 20px;
+      color: #374151;
+    }
+    li { margin-bottom: 7px; }
+
+    strong { color: #1e293b; }
+
+    .note {
+      background: #eff6ff;
+      border-left: 4px solid #1565C0;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 13.5px;
+      color: #1e40af;
+    }
+
+    .warn {
+      background: #fffbeb;
+      border-left: 4px solid #d97706;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 13.5px;
+      color: #92400e;
+    }
+
+    /* Data table */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 12px; }
+    .data-table th {
+      background: #1565C0;
+      color: #fff;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .data-table th:first-child { border-radius: 8px 0 0 0; }
+    .data-table th:last-child  { border-radius: 0 8px 0 0; }
+    .data-table td { padding: 9px 12px; border-bottom: 1px solid #e5e7eb; color: #374151; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:nth-child(even) td { background: #f8fafc; }
+
+    /* Service grid */
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .service-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .service-card strong { display: block; color: #1565C0; font-size: 13.5px; margin-bottom: 3px; }
+    .service-card span   { font-size: 12.5px; color: #64748b; }
+
+    /* Rights list */
+    .rights-list { list-style: none; padding: 0; }
+    .rights-list li {
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .rights-list li:last-child { border-bottom: none; }
+    .rights-list .badge {
+      background: #1565C0;
+      color: #fff;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    a { color: #1565C0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    footer {
+      background: #1565C0;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      padding: 20px 16px;
+      font-size: 13px;
+    }
+    footer a { color: #fff; font-weight: 600; }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 22px; }
+      .card { padding: 18px 16px; }
+      .data-table { font-size: 12px; }
+      .data-table th, .data-table td { padding: 8px 9px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Privacy Policy</h1>
+  <p>PacMate &nbsp;·&nbsp; Last Updated: June 2026</p>
+</header>
+
+<main>
+
+  <!-- 1. Introduction -->
+  <div class="card">
+    <h2><span class="icon-chip">👋</span> 1. Introduction</h2>
+    <p>
+      Welcome to <strong>PacMate</strong>, the all-in-one travel companion app. This Privacy Policy
+      explains how <strong>Ram</strong> ("we", "us", "our"), the developer of PacMate, collects,
+      uses, stores, and protects your personal data when you use the PacMate Android application.
+    </p>
+    <p>
+      By creating an account or using PacMate, you confirm you have read and understood this policy.
+      If you do not agree, please uninstall the app and request deletion of your data by emailing
+      <a href="mailto:support@pacmate.app">support@pacmate.app</a>.
+    </p>
+    <div class="note">
+      This policy applies to the PacMate Android app. It covers all personal data processed through
+      Firebase services (Google LLC), Google Maps, and the other third-party SDKs listed in
+      Section 6.
+    </div>
+  </div>
+
+  <!-- 2. Who We Are -->
+  <div class="card">
+    <h2><span class="icon-chip">🏷️</span> 2. Who We Are</h2>
+    <ul style="list-style:none; padding:0;">
+      <li style="margin-bottom:8px;"><strong>App name:</strong> PacMate</li>
+      <li style="margin-bottom:8px;"><strong>Developer / Data Controller:</strong> Ram</li>
+      <li style="margin-bottom:8px;"><strong>Contact:</strong> <a href="mailto:support@pacmate.app">support@pacmate.app</a></li>
+      <li style="margin-bottom:8px;"><strong>Governing jurisdiction:</strong> India</li>
+    </ul>
+    <p>
+      As the Data Controller (under GDPR) and Data Fiduciary (under India's DPDPA 2023), we determine
+      the purposes and means of processing your personal data.
+    </p>
+  </div>
+
+  <!-- 3. Data We Collect -->
+  <div class="card">
+    <h2><span class="icon-chip">📋</span> 3. Data We Collect</h2>
+    <p>We collect only the data needed to operate the features you use.</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Data Points</th>
+          <th>Source</th>
+          <th>Required?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Account</strong></td>
+          <td>Full name, email address, encrypted password</td>
+          <td>Signup form</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td><strong>Profile</strong></td>
+          <td>Display name, phone number (optional), profile photo, home country, home currency, travel style, travel type, avatar selection</td>
+          <td>Profile setup</td>
+          <td>Partial</td>
+        </tr>
+        <tr>
+          <td><strong>Trip &amp; Budget</strong></td>
+          <td>Trip destination, start/end dates, total budget, currency, expense title, expense amount, expense category, expense notes, trip total count</td>
+          <td>Budget &amp; Trip screens</td>
+          <td>Only if feature used</td>
+        </tr>
+        <tr>
+          <td><strong>Packing Lists</strong></td>
+          <td>List name, trip destination, trip duration, packing items and categories</td>
+          <td>Packing screen</td>
+          <td>Only if feature used</td>
+        </tr>
+        <tr>
+          <td><strong>Hidden Gems</strong></td>
+          <td>Place name, description, category, tags, up to 6 photos (uploaded to Firebase Storage), GPS coordinates, city, country</td>
+          <td>Add Gem form</td>
+          <td>Only if feature used</td>
+        </tr>
+        <tr>
+          <td><strong>Route Planner</strong></td>
+          <td>Origin city, destination city, trip duration, daily budget, travel interests, pace preference, senior mode toggle, vegetarian-only toggle — sent to Gemini AI for itinerary generation</td>
+          <td>Route Planner form</td>
+          <td>Only if feature used</td>
+        </tr>
+        <tr>
+          <td><strong>Location</strong></td>
+          <td>Precise GPS location (latitude/longitude) — used for detecting nearby hidden gems and reverse-geocoding gem locations</td>
+          <td>Device GPS</td>
+          <td>Only for Gems feature</td>
+        </tr>
+        <tr>
+          <td><strong>Device &amp; Technical</strong></td>
+          <td>FCM push notification token, last-seen timestamp, online status, app crash reports (anonymised via Firebase Crashlytics), anonymous usage events (Firebase Analytics)</td>
+          <td>Automatic</td>
+          <td>Yes (app function)</td>
+        </tr>
+        <tr>
+          <td><strong>Authentication</strong></td>
+          <td>Google account ID and profile data (name, email, profile picture) when using Google Sign-In</td>
+          <td>Google Sign-In</td>
+          <td>Only if Google login used</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note" style="margin-top:14px;">
+      <strong>What we do NOT collect:</strong> payment or billing information, government IDs,
+      health data, precise real-time background location, contacts or call logs, SMS or messages,
+      or any data from other apps on your device.
+    </div>
+  </div>
+
+  <!-- 4. How We Use Your Data -->
+  <div class="card">
+    <h2><span class="icon-chip">⚙️</span> 4. How We Use Your Data</h2>
+    <ul>
+      <li><strong>Authentication:</strong> Verify your identity and maintain your session securely.</li>
+      <li><strong>Core app features:</strong> Display and sync your trips, budgets, packing lists, and gem contributions.</li>
+      <li><strong>AI itinerary generation:</strong> Your route planner inputs are sent to the Gemini API (Google) to generate a personalised travel itinerary. Results are cached for 24 hours in Firestore to minimise repeated API calls.</li>
+      <li><strong>Nearby gems discovery:</strong> Your GPS coordinates are used to find hidden gems within 5 km of your location. Coordinates are stored in Firestore only when you submit a gem.</li>
+      <li><strong>Push notifications:</strong> We use your FCM token to send in-app alerts (e.g., new gems discovered in a city you visited).</li>
+      <li><strong>Weather data:</strong> The Open-Meteo API fetches weather for a destination when creating a trip or generating a packing list. No personal data is sent to Open-Meteo.</li>
+      <li><strong>Currency conversion:</strong> Exchange rates are fetched from ExchangeRate-API and cached locally for 1 hour. No personal data is sent.</li>
+      <li><strong>Crash reporting &amp; diagnostics:</strong> Firebase Crashlytics collects anonymised crash logs to help us fix bugs. Firebase Analytics tracks anonymous usage events.</li>
+      <li><strong>Biometric authentication:</strong> If you enable biometric lock, fingerprint/face data is processed entirely on your device by the OS. We never access or store biometric data.</li>
+    </ul>
+  </div>
+
+  <!-- 5. Legal Basis for Processing (GDPR) -->
+  <div class="card">
+    <h2><span class="icon-chip">⚖️</span> 5. Legal Basis for Processing (GDPR)</h2>
+    <p>For users in the European Economic Area (EEA) and United Kingdom, we process your data under the following lawful bases:</p>
+    <table class="data-table">
+      <thead>
+        <tr><th>Processing Activity</th><th>Lawful Basis</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Creating and managing your account</td>
+          <td>Performance of a contract (Art. 6(1)(b))</td>
+        </tr>
+        <tr>
+          <td>Storing trips, budgets, packing lists, expenses</td>
+          <td>Performance of a contract (Art. 6(1)(b))</td>
+        </tr>
+        <tr>
+          <td>Sending push notifications</td>
+          <td>Consent (Art. 6(1)(a)) — you grant notification permission</td>
+        </tr>
+        <tr>
+          <td>Accessing GPS for nearby gems</td>
+          <td>Consent (Art. 6(1)(a)) — you grant location permission</td>
+        </tr>
+        <tr>
+          <td>Sending route planner inputs to Gemini AI</td>
+          <td>Performance of a contract (Art. 6(1)(b))</td>
+        </tr>
+        <tr>
+          <td>Firebase Analytics &amp; Crashlytics</td>
+          <td>Legitimate interests (Art. 6(1)(f)) — app stability and improvement</td>
+        </tr>
+        <tr>
+          <td>Uploading profile photos and gem photos</td>
+          <td>Consent (Art. 6(1)(a)) — you voluntarily upload</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 6. Third-Party Services -->
+  <div class="card">
+    <h2><span class="icon-chip">🔌</span> 6. Third-Party Services</h2>
+    <p>PacMate uses the following third-party services. Each has its own privacy policy.</p>
+
+    <div class="service-grid">
+      <div class="service-card">
+        <strong>Firebase Auth</strong>
+        <span>Google LLC — authentication and session management</span>
+      </div>
+      <div class="service-card">
+        <strong>Cloud Firestore</strong>
+        <span>Google LLC — stores all user data, trips, gems, notifications</span>
+      </div>
+      <div class="service-card">
+        <strong>Firebase Storage</strong>
+        <span>Google LLC — stores profile photos and hidden gem photos</span>
+      </div>
+      <div class="service-card">
+        <strong>Firebase Cloud Messaging</strong>
+        <span>Google LLC — push notification delivery</span>
+      </div>
+      <div class="service-card">
+        <strong>Firebase Analytics</strong>
+        <span>Google LLC — anonymous usage analytics</span>
+      </div>
+      <div class="service-card">
+        <strong>Firebase Crashlytics</strong>
+        <span>Google LLC — anonymised crash diagnostics</span>
+      </div>
+      <div class="service-card">
+        <strong>Firebase App Check</strong>
+        <span>Google LLC — verifies requests come from the genuine app</span>
+      </div>
+      <div class="service-card">
+        <strong>Firebase Cloud Functions</strong>
+        <span>Google LLC — serverless backend logic (AI caching, notifications)</span>
+      </div>
+      <div class="service-card">
+        <strong>Google Sign-In</strong>
+        <span>Google LLC — optional OAuth login</span>
+      </div>
+      <div class="service-card">
+        <strong>Gemini API</strong>
+        <span>Google LLC — AI itinerary generation for Route Planner</span>
+      </div>
+      <div class="service-card">
+        <strong>Google Maps &amp; Places API</strong>
+        <span>Google LLC — interactive maps, destination autocomplete</span>
+      </div>
+      <div class="service-card">
+        <strong>Open-Meteo</strong>
+        <span>Open-Meteo — free weather API; no personal data sent</span>
+      </div>
+      <div class="service-card">
+        <strong>ExchangeRate-API</strong>
+        <span>ExchangeRate-API — currency exchange rates; no personal data sent</span>
+      </div>
+    </div>
+
+    <p style="margin-top:14px;">
+      All Firebase services are operated by Google LLC and governed by the
+      <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a>.
+      Firebase data may be stored on servers in the United States and other countries. By using
+      PacMate, you consent to such international transfers.
+    </p>
+  </div>
+
+  <!-- 7. Data Sharing -->
+  <div class="card">
+    <h2><span class="icon-chip">🤝</span> 7. Data Sharing</h2>
+    <ul>
+      <li>We <strong>do not sell</strong> your personal data to any third party, ever.</li>
+      <li>We <strong>do not rent or trade</strong> your data for advertising purposes.</li>
+      <li>We share data with Google LLC solely to operate the Firebase, Maps, and Gemini services described above.</li>
+      <li>Hidden gem content (place name, description, category, photos, approximate location) you post is visible to other PacMate users on the community map by design. Your personal account details (email, phone) are never shown publicly.</li>
+      <li>We may disclose data if required to do so by law, court order, or lawful government authority.</li>
+    </ul>
+  </div>
+
+  <!-- 8. Data Storage & Security -->
+  <div class="card">
+    <h2><span class="icon-chip">🔒</span> 8. Data Storage &amp; Security</h2>
+    <ul>
+      <li>All data is stored in <strong>Google Cloud (Firebase)</strong> infrastructure, protected by Google's enterprise-grade security.</li>
+      <li>Data in transit is protected by <strong>TLS encryption</strong>.</li>
+      <li>Firebase Security Rules restrict access so users can only read and write their own data.</li>
+      <li>Sensitive tokens (session, FCM) are stored using <strong>flutter_secure_storage</strong> on your device, backed by Android Keystore.</li>
+      <li>Biometric data (fingerprint/face) is never transmitted — processed entirely on-device by the Android OS.</li>
+      <li>We apply rate limiting on authentication (5 attempts per 15 minutes) to protect accounts from brute-force attacks.</li>
+      <li>Firebase App Check verifies that API requests originate from the genuine PacMate app.</li>
+    </ul>
+    <div class="warn">
+      No system is 100% secure. If you suspect unauthorised access to your account, change your
+      password immediately and email <a href="mailto:support@pacmate.app">support@pacmate.app</a>.
+    </div>
+  </div>
+
+  <!-- 9. Data Retention -->
+  <div class="card">
+    <h2><span class="icon-chip">📅</span> 9. Data Retention</h2>
+    <ul>
+      <li><strong>Account data</strong> is retained for as long as your account is active.</li>
+      <li><strong>Trip, budget, packing list, and expense data</strong> is retained until you delete it within the app or delete your account.</li>
+      <li><strong>Hidden gem posts</strong> remain on the community map until you delete them or your account is deleted.</li>
+      <li><strong>Push notification tokens (FCM)</strong> are refreshed automatically and expire when you sign out.</li>
+      <li><strong>AI itinerary cache</strong> (Gemini results) is stored in Firestore for 24 hours, then purged.</li>
+      <li><strong>Currency rate cache</strong> is stored locally on your device for 1 hour.</li>
+      <li><strong>Crash logs</strong> (Firebase Crashlytics) are retained per Google's standard retention policy (90 days).</li>
+      <li>When you <strong>delete your account</strong>, all personal data is removed from Firestore and Firebase Storage within 30 days.</li>
+    </ul>
+
+    <div class="note" style="margin-top:12px;">
+      <strong>Deleted your app but want your data removed?</strong> Email us at
+      <a href="mailto:support@pacmate.app">support@pacmate.app</a> with subject line
+      <strong>"Data Deletion Request"</strong> and we will delete your account and all associated
+      data within 30 days.
+    </div>
+  </div>
+
+  <!-- 10. Your Rights -->
+  <div class="card">
+    <h2><span class="icon-chip">✅</span> 10. Your Rights</h2>
+    <p>Depending on where you live, you have the following rights regarding your personal data:</p>
+
+    <ul class="rights-list">
+      <li>
+        <span class="badge">Access</span>
+        <span>Request a copy of the personal data we hold about you. <em>(GDPR Art. 15 · PIPEDA · DPDPA §11)</em></span>
+      </li>
+      <li>
+        <span class="badge">Rectification</span>
+        <span>Correct inaccurate data. You can update your name, home country, currency, travel style, and profile photo directly in the app under <em>Profile → Edit</em>. <em>(GDPR Art. 16 · DPDPA §12)</em></span>
+      </li>
+      <li>
+        <span class="badge">Erasure</span>
+        <span>Delete your account and all associated data at any time from within the app or by emailing us. We will process requests within 30 days. <em>(GDPR Art. 17 · DPDPA §13)</em></span>
+      </li>
+      <li>
+        <span class="badge">Portability</span>
+        <span>Request an export of your personal data in a machine-readable format. Email <a href="mailto:support@pacmate.app">support@pacmate.app</a>. <em>(GDPR Art. 20)</em></span>
+      </li>
+      <li>
+        <span class="badge">Objection</span>
+        <span>Object to processing based on legitimate interests (e.g., analytics). Email us to opt out of Firebase Analytics. <em>(GDPR Art. 21)</em></span>
+      </li>
+      <li>
+        <span class="badge">Withdraw Consent</span>
+        <span>Revoke location, camera, or notification permissions at any time in your device Settings → Apps → PacMate → Permissions. Revoking location disables the Nearby Gems feature; all other features continue to work.</span>
+      </li>
+      <li>
+        <span class="badge">Complaint</span>
+        <span>EEA/UK users may lodge a complaint with their local data protection authority (e.g., the ICO in the UK or your national DPA). <em>(GDPR Art. 77)</em></span>
+      </li>
+      <li>
+        <span class="badge">Consent (COPPA)</span>
+        <span>US users under 13 must not use PacMate. We do not knowingly collect data from children under 13. <em>(COPPA)</em></span>
+      </li>
+      <li>
+        <span class="badge">Transparency (PIPEDA)</span>
+        <span>Canadian users have the right to know what data we hold and how it is used, and to withdraw consent at any time. <em>(PIPEDA Principle 9)</em></span>
+      </li>
+    </ul>
+
+    <p style="margin-top:12px;">
+      To exercise any of these rights, contact us at
+      <a href="mailto:support@pacmate.app">support@pacmate.app</a>.
+      We will respond within <strong>30 days</strong>.
+    </p>
+  </div>
+
+  <!-- 11. Children's Privacy -->
+  <div class="card">
+    <h2><span class="icon-chip">👶</span> 11. Children's Privacy</h2>
+    <p>
+      PacMate is not directed at children. Under the <strong>US Children's Online Privacy Protection
+      Act (COPPA)</strong>, we do not knowingly collect personal data from children under the age
+      of <strong>13</strong>. Under India's <strong>Digital Personal Data Protection Act, 2023
+      (DPDPA)</strong>, we do not process personal data of children under the age of
+      <strong>18</strong> without verifiable parental consent.
+    </p>
+    <p>
+      If you believe a child has created an account, please contact us at
+      <a href="mailto:support@pacmate.app">support@pacmate.app</a> and we will delete that account
+      promptly.
+    </p>
+  </div>
+
+  <!-- 12. Changes to This Policy -->
+  <div class="card">
+    <h2><span class="icon-chip">🔄</span> 12. Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. When we do, the "Last Updated" date at
+      the top of this page will be revised. For significant changes, we will notify you via an
+      in-app notification. Continued use of PacMate after the effective date constitutes acceptance
+      of the updated policy.
+    </p>
+  </div>
+
+  <!-- 13. Governing Law -->
+  <div class="card">
+    <h2><span class="icon-chip">🌏</span> 13. Governing Law</h2>
+    <p>
+      This Privacy Policy is governed by the laws of <strong>India</strong>. Any disputes arising
+      from this policy shall be subject to the exclusive jurisdiction of the courts of India.
+    </p>
+    <p>
+      PacMate complies with India's <strong>Digital Personal Data Protection Act, 2023 (DPDPA)</strong>.
+      As a Data Fiduciary under the DPDPA, we process personal data only for the purposes described
+      in this policy, maintain reasonable security safeguards, and honour data principal rights
+      including the right to access, correct, and erase personal data.
+    </p>
+  </div>
+
+  <!-- 14. Grievance Officer (DPDPA / India) -->
+  <div class="card">
+    <h2><span class="icon-chip">🧑‍⚖️</span> 14. Grievance Officer</h2>
+    <p>
+      In accordance with the <strong>Information Technology Act, 2000</strong> and the
+      <strong>Digital Personal Data Protection Act, 2023 (DPDPA)</strong>, a Grievance Officer
+      has been appointed to address data privacy complaints and concerns.
+    </p>
+    <ul style="list-style:none; padding:0; margin-top:10px;">
+      <li style="margin-bottom:8px;"><strong>Name:</strong> Ram</li>
+      <li style="margin-bottom:8px;"><strong>Designation:</strong> Grievance Officer, PacMate</li>
+      <li style="margin-bottom:8px;"><strong>Email:</strong> <a href="mailto:support@pacmate.app">support@pacmate.app</a></li>
+      <li><strong>Response Time:</strong> Within 30 days of receipt of the grievance</li>
+    </ul>
+    <div class="note" style="margin-top:12px;">
+      If you have a data privacy concern, email the Grievance Officer with the subject line
+      <strong>"Privacy Grievance"</strong>. We are committed to resolving all complaints within
+      30 days.
+    </div>
+  </div>
+
+  <!-- 15. Contact Us -->
+  <div class="card">
+    <h2><span class="icon-chip">📧</span> 15. Contact Us</h2>
+    <ul style="list-style:none; padding:0;">
+      <li style="margin-bottom:8px;"><strong>App:</strong> PacMate</li>
+      <li style="margin-bottom:8px;"><strong>Developer:</strong> Ram</li>
+      <li style="margin-bottom:8px;"><strong>Email:</strong> <a href="mailto:support@pacmate.app">support@pacmate.app</a></li>
+      <li><strong>Jurisdiction:</strong> India</li>
+    </ul>
+    <div class="note" style="margin-top:14px;">
+      We aim to respond to all privacy-related enquiries within <strong>7 business days</strong>.
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 PacMate. All rights reserved.</p>
+  <p style="margin-top:6px;">
+    <a href="mailto:support@pacmate.app">support@pacmate.app</a>
+    &nbsp;·&nbsp;
+    <a href="terms-and-conditions.html">Terms &amp; Conditions</a>
+  </p>
+</footer>
+
+</body>
+</html>

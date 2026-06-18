@@ -164,28 +164,27 @@ class _SplashScreenState extends State<SplashScreen>
     String destination;
 
     if (user != null) {
-      bool accountValid = false;
+      // Only reload to catch truly deleted/disabled accounts.
+      // Network errors and App Check timeouts are NOT sign-out reasons —
+      // Firebase Auth persists the session locally and refreshes tokens lazily.
       try {
-        // Timeout prevents hanging on sideloaded APKs where PlayIntegrity
-        // App Check blocks the token refresh indefinitely.
-        await user.reload()
-            .timeout(const Duration(seconds: 6));
-        await FirebaseAuth.instance.currentUser
-            ?.getIdToken(true)
-            .timeout(const Duration(seconds: 6));
-        accountValid = true;
+        await user.reload().timeout(const Duration(seconds: 5));
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'user-not-found' || e.code == 'user-disabled') {
+          await FirebaseAuth.instance.signOut();
+          if (!mounted) return;
+          context.go(seenOnboarding ? AppRoutes.login : AppRoutes.onboarding);
+          return;
+        }
+        // Any other FirebaseAuthException (network, App Check) → stay logged in
       } catch (_) {
-        // Covers: deleted account, revoked token, network error, timeout
-        await FirebaseAuth.instance.signOut();
+        // Timeout / network error → stay logged in
       }
-      destination = accountValid
-          ? AppRoutes.home
-          : (seenOnboarding ? AppRoutes.login : AppRoutes.onboarding);
+      destination = AppRoutes.home;
     } else {
       destination = seenOnboarding ? AppRoutes.login : AppRoutes.onboarding;
     }
 
-    // Single context use after all async work is done
     if (!mounted) return;
     context.go(destination);
   }

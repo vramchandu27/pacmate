@@ -374,14 +374,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 ),
               ),
 
-              const SizedBox(height: 14),
-
-              // Traveler stats row
-              FadeInUp(
-                delay: const Duration(milliseconds: 250),
-                duration: const Duration(milliseconds: 500),
-                child: _buildStatsRow(),
-              ),
             ],
           ),
         ),
@@ -456,52 +448,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  Widget _buildStatsRow() {
-    return Row(
-      children: [
-        _buildStat('50K+', 'Explorers'),
-        _buildStatDivider(),
-        _buildStat('200+', 'Countries'),
-        _buildStatDivider(),
-        _buildStat('1.2M+', 'Trips'),
-      ],
-    );
-  }
-
-  Widget _buildStat(String value, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 11,
-            color: Colors.white38,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatDivider() {
-    return Container(
-      width: 1, height: 14,
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      color: Colors.white,
-    );
-  }
-
   // ── Form Card ──────────────────────────────────────────────────────────────
 
   Widget _buildFormCard() {
@@ -520,7 +466,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       child: ClipRRect(
         borderRadius:
         const BorderRadius.vertical(top: Radius.circular(28)),
-        child: SingleChildScrollView(
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
           child: Form(
             key: _formKey,
@@ -588,6 +536,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               ],
             ),
           ),
+        ),
         ),
       ),
     );

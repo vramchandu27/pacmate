@@ -82,7 +82,8 @@ const List<_CategoryInfo> _categories = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AddExpenseScreen extends ConsumerStatefulWidget {
-  const AddExpenseScreen({super.key});
+  const AddExpenseScreen({super.key, this.trip});
+  final BudgetModel? trip;
 
   @override
   ConsumerState<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -113,7 +114,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
 
   void _syncTripCurrency() {
     if (_currencySynced || !mounted) return;
-    final trip = ref.read(activeTripProvider).valueOrNull;
+    final trip = widget.trip
+        ?? ref.read(selectedCarouselTripProvider)
+        ?? ref.read(activeTripProvider).valueOrNull;
     if (trip == null) return;
     _applyTripData(trip.currency, trip.destination);
   }
@@ -224,7 +227,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   Future<void> _onSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final trip = ref.read(activeTripProvider).valueOrNull;
+    final trip = widget.trip
+        ?? ref.read(selectedCarouselTripProvider)
+        ?? ref.read(activeTripProvider).valueOrNull;
     if (trip == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -296,15 +301,17 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   // ── Build ────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    // If the stream hadn't emitted yet during initState, catch it here
-    ref.listen<AsyncValue<BudgetModel?>>(activeTripProvider, (_, next) {
-      final trip = next.valueOrNull;
-      if (trip != null && !_currencySynced) {
-        _applyTripData(trip.currency, trip.destination);
-      }
-    });
+    // If no trip was passed via navigation and the stream hadn't emitted yet, catch it here
+    if (widget.trip == null) {
+      ref.listen<AsyncValue<BudgetModel?>>(activeTripProvider, (_, next) {
+        final t = next.valueOrNull;
+        if (t != null && !_currencySynced) _applyTripData(t.currency, t.destination);
+      });
+    }
 
-    final trip = ref.watch(activeTripProvider).valueOrNull;
+    final trip = widget.trip
+        ?? ref.watch(selectedCarouselTripProvider)
+        ?? ref.watch(activeTripProvider).valueOrNull;
     final remaining = trip != null ? trip.totalBudget - trip.totalSpent : double.infinity;
     final isOverBudget = _convertedAmount > 0 && _convertedAmount > remaining;
 

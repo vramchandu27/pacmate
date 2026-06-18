@@ -145,6 +145,13 @@ class PackingService {
     });
   }
 
+  Future<void> markReady(String listId, {String? ownerUid}) async {
+    await _firebase
+        .packingListsRef(ownerUid ?? _uid)
+        .doc(listId)
+        .update({'markedReady': true});
+  }
+
   Future<void> deletePackingList(String listId) async {
     await _myListsRef.doc(listId).delete();
   }

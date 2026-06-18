@@ -4,15 +4,15 @@ import 'dart:ui';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/network/auth_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../features/budget/services/budget_service.dart';
 import '../../../features/notifications/services/notification_service.dart';
+import '../../../features/packing/services/packing_service.dart';
 import '../../../shared/models/budget_model.dart';
 import '../../../shared/models/currency_data.dart';
 import '../../../shared/providers/user_provider.dart';
@@ -34,7 +34,7 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
   int _tripPage = 0;
   bool _didInitialScroll = false;
   bool _showNewTripHint      = false;
-  bool _locationDialogShowing = false;
+  bool _countryPromptShown   = false;
   Timer? _hintTimer;
 
   @override
@@ -56,34 +56,21 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
     super.dispose();
   }
 
-  // Shows a location permission dialog once per active trip.
-  // Triggered when user "lands" — i.e. the trip's start date has passed.
-  Future<void> _maybeRequestLocation(BudgetModel activeTrip) async {
-    // Guard: prevent showing the dialog twice if ref.listen fires multiple times
-    if (_locationDialogShowing) return;
 
-    final perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.always ||
-        perm == LocationPermission.whileInUse) { return; } // already granted
-
-    final prefs = await SharedPreferences.getInstance();
-    final key   = 'location_asked_${activeTrip.id}';
-    if (prefs.getBool(key) == true) return; // already asked for this trip
-    await prefs.setBool(key, true);
-
+  Future<void> _maybePromptCountry(String homeCountry) async {
+    if (_countryPromptShown || homeCountry.trim().isNotEmpty) return;
+    _countryPromptShown = true;
+    await Future.delayed(Duration.zero); // let the frame settle
     if (!mounted) return;
-    _locationDialogShowing = true;
-
-    final allow = await showDialog<bool>(
+    await showModalBottomSheet<void>(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => _LocationPermissionDialog(
-        destination: activeTrip.destination,
-      ),
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _CountrySetupSheet(),
     );
-
-    _locationDialogShowing = false;
-    if (allow == true && mounted) await Geolocator.requestPermission();
   }
 
   static List<BudgetModel> _sortByDate(List<BudgetModel> trips) {
@@ -131,14 +118,15 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
     final unreadCount = ref.watch(unreadCountProvider);
     final w = MediaQuery.sizeOf(context).width;
 
-    // Detect when a trip becomes active and prompt for location if needed
-    ref.listen<AsyncValue<List<BudgetModel>>>(allTripsProvider, (_, next) {
-      final now = DateTime.now();
-      final active = next.valueOrNull?.where(
-        (t) => !t.startDate.isAfter(now) && t.endDate.isAfter(now),
-      ).firstOrNull;
-      if (active != null) _maybeRequestLocation(active);
+    // Prompt for home country if not set — non-dismissible until filled
+    ref.listen<AsyncValue>(currentUserProvider, (_, next) {
+      final country = next.valueOrNull?.homeCountry ?? '';
+      _maybePromptCountry(country);
     });
+    if (user != null) _maybePromptCountry(user.homeCountry);
+
+    // Location is requested lazily when the user opens Hidden Gems → Nearby tab,
+    // not here — prompting on trip creation is confusing when the user hasn't traveled yet.
     final hp = w < 360 ? 14.0 : 20.0; // horizontal padding
 
     return Scaffold(
@@ -267,22 +255,30 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: nameFz,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                  children: [
-                    const TextSpan(text: 'Hey '),
-                    TextSpan(
-                      text: '$userName! 👋',
-                      style: const TextStyle(color: AppColors.primary),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: nameFz,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.navy,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Hey '),
+                        TextSpan(
+                          text: '$userName!',
+                          style: const TextStyle(color: AppColors.primary),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 5),
+                  _WavingHand(fontSize: nameFz),
+                ],
               ),
               const SizedBox(height: 1),
               Text(
@@ -1705,7 +1701,7 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
   // ── Stats Grid ────────────────────────────────────────────────────────────
 
   List<Map<String, dynamic>> _buildStatsData(
-      List<BudgetModel> trips, String homeCurrency) {
+      List<BudgetModel> trips, String homeCurrency, int listsCount) {
     final now = DateTime.now();
 
     // Count trips that are done — past end date OR manually completed.
@@ -1771,7 +1767,7 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
       },
       {
         'label': 'Lists',
-        'value': '0',
+        'value': '$listsCount',
         'icon': 'luggage',
         'color': 'purple',
       },
@@ -1781,7 +1777,9 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
   Widget _buildStatsGrid(BuildContext context, List<BudgetModel> trips, double w) {
     final homeCurrency =
         ref.watch(currentUserProvider).valueOrNull?.currency ?? 'INR';
-    final stats = _buildStatsData(trips, homeCurrency);
+    final listsAsync = ref.watch(packingListsProvider);
+    final listsCount = listsAsync.valueOrNull?.length ?? 0;
+    final stats = _buildStatsData(trips, homeCurrency, listsCount);
     // Target a fixed card height of ~130dp regardless of screen width.
     // This prevents the tall-card gap issue on large phones.
     final cardW = (w - 40 - 12) / 2; // 40 = 20px padding each side, 12 = spacing
@@ -1799,10 +1797,16 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
       itemCount: stats.length,
       itemBuilder: (context, index) {
         final stat = stats[index];
+        final isTripsCard = stat['label'] == 'Trips Done';
         return ZoomIn(
           duration: const Duration(milliseconds: 400),
           delay: Duration(milliseconds: index * 80),
-          child: _StatCard(stat: stat),
+          child: _StatCard(
+            stat: stat,
+            onTap: isTripsCard
+                ? () => context.push(AppRoutes.allTrips)
+                : null,
+          ),
         );
       },
     );
@@ -2062,8 +2066,9 @@ class _UpArrowPainter extends CustomPainter {
 // ─── STAT CARD ────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.stat});
+  const _StatCard({required this.stat, this.onTap});
   final Map<String, dynamic> stat;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -2076,12 +2081,16 @@ class _StatCard extends StatelessWidget {
       final valueFz = (cw * 0.115).clamp(15.0, 22.0);
       final labelFz = (cw * 0.085).clamp(10.0, 13.0);
 
-      return Container(
+      final card = Container(
         padding: const EdgeInsets.all(pad),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.lightOutline),
+          border: Border.all(
+            color: onTap != null
+                ? color.withAlpha(60)
+                : AppColors.lightOutline,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withAlpha(5),
@@ -2093,14 +2102,23 @@ class _StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: iconBox,
-              height: iconBox,
-              decoration: BoxDecoration(
-                color: color.withAlpha(18),
-                borderRadius: BorderRadius.circular(iconBox * 0.28),
-              ),
-              child: Icon(_icon(stat['icon']), color: color, size: 18),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: iconBox,
+                  height: iconBox,
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(18),
+                    borderRadius: BorderRadius.circular(iconBox * 0.28),
+                  ),
+                  child: Icon(_icon(stat['icon']), color: color, size: 18),
+                ),
+                const Spacer(),
+                if (onTap != null)
+                  Icon(Icons.arrow_forward_ios_rounded,
+                      size: 13, color: color.withAlpha(180)),
+              ],
             ),
             const Spacer(),
             Text(
@@ -2125,6 +2143,17 @@ class _StatCard extends StatelessWidget {
               maxLines: 1,
             ),
           ],
+        ),
+      );
+
+      if (onTap == null) return card;
+      return Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: card,
         ),
       );
     });
@@ -2357,114 +2386,252 @@ class _NoTripCardState extends State<_NoTripCard> {
 
 }
 
-// ─── LOCATION PERMISSION DIALOG ───────────────────────────────────────────────
 
-class _LocationPermissionDialog extends StatelessWidget {
-  const _LocationPermissionDialog({required this.destination});
-  final String destination;
+// ── Waving hand emoji with spring-bounce wave animation ──────────────────────
 
-  // Extract just the country/city from "Barcelona, Spain" → "Spain"
-  String get _place {
-    final parts = destination.split(',');
-    return parts.last.trim().isNotEmpty ? parts.last.trim() : destination;
+class _WavingHand extends StatefulWidget {
+  const _WavingHand({required this.fontSize});
+  final double fontSize;
+
+  @override
+  State<_WavingHand> createState() => _WavingHandState();
+}
+
+class _WavingHandState extends State<_WavingHand>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _angle;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+    // Waving sequence: tilt right → left → right → left → settle back to 0
+    _angle = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.45), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.45, end: -0.2), weight: 1.5),
+      TweenSequenceItem(tween: Tween(begin: -0.2, end: 0.45), weight: 1.5),
+      TweenSequenceItem(tween: Tween(begin: 0.45, end: -0.2), weight: 1.5),
+      TweenSequenceItem(tween: Tween(begin: -0.2, end: 0.3), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.3, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+
+    // Short delay so the greeting fades in first, then the hand waves
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon
-            Container(
-              width: 72,
-              height: 72,
+    return AnimatedBuilder(
+      animation: _angle,
+      builder: (_, child) => Transform.rotate(
+        angle: _angle.value,
+        alignment: Alignment.bottomCenter,
+        child: child,
+      ),
+      child: Text(
+        '👋',
+        style: TextStyle(fontSize: widget.fontSize + 1),
+      ),
+    );
+  }
+}
+
+// ─── COUNTRY SETUP SHEET ─────────────────────────────────────────────────────
+// Non-dismissible bottom sheet shown on home screen when homeCountry is empty.
+// Forces the user to pick their country before using the app.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _setupCountries = [
+  'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Armenia', 'Australia',
+  'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belgium', 'Bhutan',
+  'Bolivia', 'Brazil', 'Cambodia', 'Canada', 'Chile', 'China', 'Colombia',
+  'Croatia', 'Czech Republic', 'Denmark', 'Egypt', 'Ethiopia', 'Finland',
+  'France', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Hungary', 'Iceland',
+  'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy',
+  'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kuwait', 'Laos', 'Lebanon',
+  'Malaysia', 'Maldives', 'Mexico', 'Mongolia', 'Morocco', 'Myanmar',
+  'Nepal', 'Netherlands', 'New Zealand', 'Nigeria', 'Norway', 'Oman',
+  'Pakistan', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar',
+  'Romania', 'Russia', 'Saudi Arabia', 'Senegal', 'Serbia', 'Singapore',
+  'South Africa', 'South Korea', 'Spain', 'Sri Lanka', 'Sweden',
+  'Switzerland', 'Taiwan', 'Tanzania', 'Thailand', 'Turkey', 'Uganda',
+  'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States',
+  'Uzbekistan', 'Vietnam', 'Yemen', 'Zimbabwe',
+];
+
+class _CountrySetupSheet extends ConsumerStatefulWidget {
+  const _CountrySetupSheet();
+
+  @override
+  ConsumerState<_CountrySetupSheet> createState() => _CountrySetupSheetState();
+}
+
+class _CountrySetupSheetState extends ConsumerState<_CountrySetupSheet> {
+  String? _selected;
+  bool _saving = false;
+
+  Future<void> _save() async {
+    if (_selected == null) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(authServiceProvider).updateProfile({'homeCountry': _selected!});
+      if (mounted) Navigator.of(context).pop();
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom +
+        MediaQuery.of(context).viewPadding.bottom;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40, height: 4,
               decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.flight_land_rounded,
-                size: 36,
-                color: AppColors.primary,
+                color: AppColors.lightOutline,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Title
-            Text(
-              'Welcome to $_place! 🎉',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.navy,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Body
-            Text(
-              'Allow PacMate to access your location so we can show hidden gems near you in $_place.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                color: AppColors.lightOnSurfaceVar,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // Enable button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+          ),
+          const SizedBox(height: 20),
+          // Icon + heading
+          Row(
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'Enable Location',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: const Icon(Icons.flag_outlined,
+                    color: AppColors.primary, size: 22),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'One quick thing!',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.navy,
+                      ),
+                    ),
+                    Text(
+                      'Where are you from? We need this to personalise your experience.',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AppColors.lightOnSurfaceVar,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Country dropdown
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.lightBackground,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _selected != null
+                    ? AppColors.primary
+                    : AppColors.lightOutline,
+              ),
             ),
-            const SizedBox(height: 10),
-
-            // Skip button
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(false),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: const Text(
-                  'Maybe later — show all gems',
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selected,
+                isExpanded: true,
+                hint: const Text(
+                  'Select your home country',
                   style: TextStyle(
                     fontFamily: 'Poppins',
-                    fontSize: 13,
+                    fontSize: 14,
                     color: AppColors.lightOnSurfaceVar,
                   ),
                 ),
+                icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.lightOnSurfaceVar),
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.navy,
+                ),
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                items: _setupCountries
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (v) => setState(() => _selected = v),
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+          // Confirm button
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: (_selected == null || _saving) ? null : _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                disabledBackgroundColor: AppColors.primary.withAlpha(80),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 22, height: 22,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2.5, color: Colors.white),
+                    )
+                  : const Text(
+                      'Confirm & Continue',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -473,7 +473,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(width: 1, height: 32, color: Colors.white.withAlpha(28)),
                       _heroStat(user.currency, 'Currency'),
                       Container(width: 1, height: 32, color: Colors.white.withAlpha(28)),
-                      _heroStat(_firstWord(user.homeCountry), 'Country'),
+                      _heroStat(
+                        user.homeCountry.trim().isEmpty
+                            ? 'Not set'
+                            : _firstWord(user.homeCountry),
+                        'Country',
+                      ),
                     ],
                   ),
                 ),
@@ -573,13 +578,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildCompleteProfileBanner(UserModel user) {
-    final hasPhoto = user.photoUrl != null && user.photoUrl!.isNotEmpty;
-    final hasName  = user.fullName.trim().length >= 2;
+    final hasPhoto   = user.photoUrl != null && user.photoUrl!.isNotEmpty;
+    final hasName    = user.fullName.trim().length >= 2;
+    final hasCountry = user.homeCountry.trim().isNotEmpty;
 
     final steps = [
-      (label: 'Profile photo',       done: hasPhoto, icon: Icons.camera_alt_outlined),
-      (label: 'Full name',           done: hasName,  icon: Icons.person_outline_rounded),
-      (label: 'Travel preferences',  done: false,    icon: Icons.tune_rounded),
+      (label: 'Profile photo',  done: hasPhoto,   icon: Icons.camera_alt_outlined),
+      (label: 'Full name',      done: hasName,    icon: Icons.person_outline_rounded),
+      (label: 'Home country',   done: hasCountry, icon: Icons.flag_outlined),
     ];
 
     final doneCount = steps.where((s) => s.done).length;
@@ -636,42 +642,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          // Checklist
+          // Checklist — completed steps are dimmed, pending steps are prominent
           ...steps.map((s) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Row(
                   children: [
                     Icon(
                       s.done
                           ? Icons.check_circle_rounded
                           : Icons.radio_button_unchecked_rounded,
-                      size: 17,
+                      size: 18,
                       color: s.done
                           ? AppColors.success
-                          : AppColors.lightOnSurfaceVar,
+                          : AppColors.warning,
                     ),
-                    const SizedBox(width: 8),
-                    Icon(s.icon,
-                        size: 15,
-                        color: s.done
-                            ? AppColors.success
-                            : AppColors.lightOnSurfaceVar),
+                    const SizedBox(width: 10),
+                    Icon(
+                      s.icon,
+                      size: 15,
+                      color: s.done
+                          ? AppColors.lightOnSurfaceVar
+                          : AppColors.navy,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       s.label,
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 13,
-                        fontWeight:
-                            s.done ? FontWeight.w400 : FontWeight.w500,
+                        fontWeight: s.done ? FontWeight.w400 : FontWeight.w600,
                         color: s.done
                             ? AppColors.lightOnSurfaceVar
                             : AppColors.navy,
-                        decoration:
-                            s.done ? TextDecoration.lineThrough : null,
-                        decorationColor: AppColors.lightOnSurfaceVar,
                       ),
                     ),
+                    if (s.done) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withAlpha(20),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               )),
@@ -801,7 +825,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
       {
         'label': 'Home Country',
-        'value': user.homeCountry,
+        'value': user.homeCountry.trim().isEmpty ? 'Not set' : user.homeCountry,
         'icon': Icons.flag_outlined,
         'color': AppColors.warning,
       },
@@ -903,6 +927,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     const currencies   = [
       'INR', 'USD', 'EUR', 'GBP', 'AUD',
       'SGD', 'THB', 'JPY', 'AED', 'CAD',
+    ];
+    const countries = [
+      'India', 'United States', 'United Kingdom', 'Australia', 'Canada',
+      'Singapore', 'UAE', 'Germany', 'France', 'Japan', 'Thailand',
+      'Malaysia', 'Indonesia', 'Philippines', 'New Zealand', 'South Africa',
+      'Brazil', 'Mexico', 'Italy', 'Spain', 'Netherlands', 'Sweden',
+      'Switzerland', 'South Korea', 'Vietnam', 'Sri Lanka', 'Nepal',
     ];
     final bottomPad = MediaQuery.of(context).padding.bottom;
 
@@ -1028,6 +1059,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     fontSize: 16,
                   ),
                   decoration: _fieldDecoration('', Icons.currency_exchange_rounded),
+                ),
+                const SizedBox(height: 20),
+
+                // Home country
+                _fieldLabel('Home Country', Icons.flag_outlined, AppColors.success),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: countries.contains(_homeCountry) ? _homeCountry : countries.first,
+                  items: countries
+                      .map((c) => DropdownMenuItem(
+                            value: c,
+                            child: Text(c,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.navy,
+                                )),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() => _homeCountry = v!),
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.navy,
+                    fontSize: 16,
+                  ),
+                  decoration: _fieldDecoration('', Icons.flag_outlined),
                 ),
                 const SizedBox(height: 32),
 

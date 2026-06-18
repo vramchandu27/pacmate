@@ -85,11 +85,26 @@ class _AddGemScreenState extends ConsumerState<AddGemScreen> {
         if (mounted) setState(() => _locationLabel = 'Location unavailable');
         return;
       }
-      // Use last known position first (instant) — fall back to fresh fix
-      Position? pos = await Geolocator.getLastKnownPosition();
-      pos ??= await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-      ).timeout(const Duration(seconds: 15));
+      // Always get a fresh fix — never use last known position which can be
+      // hours old and from a completely different location, causing the gem
+      // to be stored at wrong coordinates.
+      // Try network-based (fast) first, then GPS for better accuracy.
+      Position? pos;
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.low,   // network-based, fast (~1s)
+            timeLimit: Duration(seconds: 8),
+          ),
+        );
+      } catch (_) {
+        pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 20),
+          ),
+        );
+      }
       if (!mounted) return;
       _lat = pos.latitude;
       _lng = pos.longitude;
@@ -712,7 +727,7 @@ class _AddGemScreenState extends ConsumerState<AddGemScreen> {
   Future<void> _showSuccessOverlay(String gemName) async {
     await showGeneralDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       barrierLabel: 'Success',
       barrierColor: Colors.black.withAlpha(160),
       transitionDuration: const Duration(milliseconds: 450),
@@ -759,7 +774,8 @@ class _GemSuccessDialogState extends State<_GemSuccessDialog>
       if (!mounted) return;
       _confettiController.forward();
       Future.delayed(const Duration(milliseconds: 2800), () {
-        if (mounted) Navigator.of(context).pop();
+        if (!mounted) return;
+        Navigator.of(context, rootNavigator: true).pop();
       });
     });
   }
@@ -773,8 +789,10 @@ class _GemSuccessDialogState extends State<_GemSuccessDialog>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
+    return Material(
+      type: MaterialType.transparency,
+      child: GestureDetector(
+      onTap: () => Navigator.of(context, rootNavigator: true).pop(),
       behavior: HitTestBehavior.opaque,
       child: Stack(
         children: [
@@ -885,6 +903,7 @@ class _GemSuccessDialogState extends State<_GemSuccessDialog>
           ),
         ],
       ),
+    ),
     );
   }
 }

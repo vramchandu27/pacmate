@@ -257,55 +257,45 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   // ── Slide ─────────────────────────────────────────────────────────────────
 
   Widget _buildSlide(_SlideData slide, double h) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Fixed space consumed by text content + their guaranteed gaps
-        const fixedContent =
-            36.0   // tag pill
-          + 10.0   // gap tag → title
-          + 65.0   // title (~2 lines)
-          + 8.0    // gap title → subtitle
-          + 60.0   // subtitle (~3 lines)
-          + 16.0   // gap subtitle → chips
-          + 36.0   // chips row
-          + 24.0;  // gap lottie → tag
+    final isSmall = h < 700;
+    final isTiny  = h < 600;
 
-        // Lottie fills whatever space is left — never so small it looks broken
-        final lottieH = (constraints.maxHeight - fixedContent).clamp(80.0, 220.0);
-
-        return FadeTransition(
-          opacity: _contentFade,
-          child: SlideTransition(
-            position: _contentSlide,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: lottieH,
-                    child: Lottie.asset(
-                      slide.lottieAsset,
-                      fit: BoxFit.contain,
-                      repeat: true,
-                      errorBuilder: (_, e, s) =>
-                          _buildFallbackLottie(slide, lottieH),
-                    ),
+    return FadeTransition(
+      opacity: _contentFade,
+      child: SlideTransition(
+        position: _contentSlide,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: isTiny ? 60.0 : 80.0,
+                    maxHeight: 220.0,
                   ),
-                  const SizedBox(height: 24),
-                  _buildTagPill(slide),
-                  const SizedBox(height: 10),
-                  _buildTitle(slide, h),
-                  const SizedBox(height: 8),
-                  _buildSubtitle(slide, h),
-                  const SizedBox(height: 16),
-                  _buildChips(slide),
-                ],
+                  child: Lottie.asset(
+                    slide.lottieAsset,
+                    fit: BoxFit.contain,
+                    repeat: true,
+                    errorBuilder: (_, e, s) =>
+                        _buildFallbackLottie(slide, isTiny ? 60.0 : 80.0),
+                  ),
+                ),
               ),
-            ),
+              SizedBox(height: isTiny ? 8 : isSmall ? 14 : 24),
+              _buildTagPill(slide),
+              SizedBox(height: isTiny ? 4 : isSmall ? 6 : 10),
+              _buildTitle(slide, h),
+              SizedBox(height: isTiny ? 4 : 8),
+              _buildSubtitle(slide, h),
+              SizedBox(height: isTiny ? 8 : isSmall ? 12 : 16),
+              _buildChips(slide),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

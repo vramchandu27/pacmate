@@ -43,6 +43,8 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen>
   bool _isGenerating = false;
   bool _prevAllDone  = false;
   bool _showConfetti = false;
+  bool _markedReady  = false;
+  String? _ownerUid;
 
   @override
   void initState() {
@@ -130,8 +132,13 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen>
         final total      = normalized.length;
         final packed     = normalized.where((i) => i['packed'] == true).length;
         final progress   = total > 0 ? packed / total : 0.0;
-        final allDone    = total > 0 && packed == total;
-        final isOwner    = listData['userId'] == ref.read(packingServiceProvider).currentUid;
+        final allDone      = total > 0 && packed == total;
+        final isOwner      = listData['userId'] == ref.read(packingServiceProvider).currentUid;
+        final firestoreReady = listData['markedReady'] as bool? ?? false;
+        final showReady    = packed > 0 && !firestoreReady && !_markedReady;
+
+        // Keep ownerUid in sync so _onReadyTap can reference it
+        _ownerUid = listData['userId'] as String?;
 
         final destination = listData['destination'] as String? ?? '';
         final listName    = listData['name'] as String? ?? 'Packing List';
@@ -140,14 +147,14 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen>
             ? '🎉 All packed! Ready to go'
             : 'Tap items as you pack · $packed/$total done';
 
-        // Slide up the Ready button when all items are packed
-        if (allDone && !_prevAllDone) {
+        // Slide up the Ready button when all items are packed (and not yet confirmed)
+        if (showReady && !_prevAllDone) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             _readyEntranceController.forward(from: 0);
           });
         }
-        _prevAllDone = allDone;
+        _prevAllDone = showReady;
 
         final filtered = _filterItems(normalized, selectedCategory);
         final grouped  = _groupByCategory(filtered);
@@ -193,7 +200,7 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen>
                         ),
                       ),
                     ],
-                    SliverToBoxAdapter(child: SizedBox(height: allDone ? 180 : 100)),
+                    SliverToBoxAdapter(child: SizedBox(height: showReady ? 180 : 100)),
                   ],
                 ],
               ),
@@ -213,12 +220,13 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen>
                     ),
                   ),
                 ),
-              if (allDone) _buildReadyBar(context),
+              if (showReady) _buildReadyBar(context),
             ],
           ),
-          floatingActionButton: allDone
-              ? null
-              : FloatingActionButton(
+          floatingActionButtonLocation: showReady
+              ? FloatingActionButtonLocation.startFloat
+              : FloatingActionButtonLocation.endFloat,
+          floatingActionButton: FloatingActionButton(
                   heroTag: 'packing_add_fab',
                   onPressed: () => _addCustomItem(rawItems, selectedCategory),
                   backgroundColor: AppColors.primary,
@@ -926,6 +934,15 @@ class _PackingListScreenState extends ConsumerState<PackingListScreen>
   }
 
   Future<void> _onReadyTap() async {
+    // Hide the button immediately so it won't reappear on re-open
+    setState(() => _markedReady = true);
+    // Persist to Firestore so it stays hidden across sessions
+    try {
+      await ref.read(packingServiceProvider).markReady(
+            widget.listId,
+            ownerUid: _ownerUid,
+          );
+    } catch (_) {}
     await _readyBounceController.forward(from: 0);
     if (!mounted) return;
     setState(() => _showConfetti = true);

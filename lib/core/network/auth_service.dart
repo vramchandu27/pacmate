@@ -83,9 +83,7 @@ class AuthService {
     try {
       await _updatePresence(credential.user!.uid, isOnline: true);
     } catch (_) {}
-    try {
-      await _firebase.logLogin('email');
-    } catch (_) {}
+    _firebase.logLogin('email');
 
     return credential;
   }
@@ -125,10 +123,10 @@ class AuthService {
         fullName: user.displayName ?? 'Traveler',
         photoUrl: user.photoURL,
       );
-      await _firebase.logSignUp('google');
+      _firebase.logSignUp('google');
     } else {
       await _updatePresence(user.uid, isOnline: true);
-      await _firebase.logLogin('google');
+      _firebase.logLogin('google');
     }
 
     return userCredential;

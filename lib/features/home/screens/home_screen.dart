@@ -41,9 +41,14 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   bool _showHint = false;
   Timer? _hintTimer;
+  DateTime? _pausedAt;
+
+  // After this much time in the background, reset to the Home tab on resume.
+  static const _backgroundResetThreshold = Duration(minutes: 5);
 
   static const List<Widget> _screens = [
     HomeDashboardView(),
@@ -76,9 +81,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _hintTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _pausedAt = DateTime.now();
+    } else if (state == AppLifecycleState.resumed) {
+      final paused = _pausedAt;
+      if (paused != null &&
+          DateTime.now().difference(paused) >= _backgroundResetThreshold) {
+        // User was away long enough — clear any pushed routes and go to Home tab.
+        if (mounted) {
+          ref.read(homeTabIndexProvider.notifier).state = 0;
+          context.go(AppRoutes.home);
+        }
+      }
+      _pausedAt = null;
+    }
   }
 
   void _onTabChanged(int index, bool hasActiveTrip) {
@@ -179,7 +209,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 FloatingActionButton(
                   heroTag: 'home_add_expense_fab',
-                  onPressed: () => context.push(AppRoutes.addExpense),
+                  onPressed: () {
+                    // Pass whichever trip is currently visible in the carousel.
+                    // Falls back to the activeTripProvider if the budget screen
+                    // hasn't seeded the selection yet (e.g., first load).
+                    final trip = ref.read(selectedCarouselTripProvider)
+                        ?? ref.read(activeTripProvider).valueOrNull;
+                    context.push(AppRoutes.addExpense, extra: trip);
+                  },
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   elevation: 4,

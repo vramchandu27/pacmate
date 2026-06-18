@@ -16,6 +16,8 @@ import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/verify_email_screen.dart';
 import 'features/budget/screens/add_expense_screen.dart';
+import 'features/budget/screens/all_trips_screen.dart';
+import 'shared/models/budget_model.dart';
 import 'features/budget/screens/budget_report_screen.dart';
 import 'features/budget/screens/budget_screen.dart';
 import 'features/budget/screens/create_trip_screen.dart';
@@ -158,14 +160,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         GoRoute(
           path: 'add-expense',
           name: 'addExpense',
-          pageBuilder: (context, state) =>
-              _modalRoute(state: state, child: const AddExpenseScreen()),
+          pageBuilder: (context, state) {
+            final trip = state.extra as BudgetModel?;
+            return _modalRoute(state: state, child: AddExpenseScreen(trip: trip));
+          },
         ),
         GoRoute(
           path: 'report',
           name: 'budgetReport',
           pageBuilder: (context, state) =>
               _slideRoute(state: state, child: const BudgetReportScreen()),
+        ),
+        GoRoute(
+          path: 'all-trips',
+          name: 'allTrips',
+          pageBuilder: (context, state) =>
+              _slideRoute(state: state, child: const AllTripsScreen()),
         ),
       ],
     ),

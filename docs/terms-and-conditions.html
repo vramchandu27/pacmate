@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms &amp; Conditions — PacMate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    header {
+      background: #1565C0;
+      color: #fff;
+      padding: 36px 24px 28px;
+      text-align: center;
+    }
+    header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+    header p  { font-size: 13px; opacity: 0.82; margin-top: 6px; }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1565C0;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-chip {
+      background: #e8f0fe;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 15px;
+    }
+
+    p { margin-bottom: 10px; color: #374151; }
+    p:last-child { margin-bottom: 0; }
+
+    ul, ol {
+      padding-left: 20px;
+      color: #374151;
+    }
+    li { margin-bottom: 7px; }
+
+    strong { color: #1e293b; }
+
+    .note {
+      background: #eff6ff;
+      border-left: 4px solid #1565C0;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 13.5px;
+      color: #1e40af;
+    }
+
+    .warn {
+      background: #fffbeb;
+      border-left: 4px solid #d97706;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 13.5px;
+      color: #92400e;
+    }
+
+    .danger {
+      background: #fef2f2;
+      border-left: 4px solid #dc2626;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 13.5px;
+      color: #991b1b;
+    }
+
+    /* Feature grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .feature-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 11px 13px;
+      font-size: 13.5px;
+      color: #374151;
+    }
+    .feature-card strong { display: block; color: #1565C0; margin-bottom: 2px; font-size: 13px; }
+
+    /* Acceptable use grid */
+    .use-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .use-card {
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .use-card.allowed { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .use-card.not-allowed { background: #fef2f2; border: 1px solid #fecaca; }
+    .use-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .use-card.allowed h3 { color: #15803d; }
+    .use-card.not-allowed h3 { color: #dc2626; }
+    .use-card ul { padding-left: 16px; margin: 0; font-size: 13px; color: #374151; }
+
+    a { color: #1565C0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    footer {
+      background: #1565C0;
+      color: rgba(255,255,255,0.75);
+      text-align: center;
+      padding: 20px 16px;
+      font-size: 13px;
+    }
+    footer a { color: #fff; font-weight: 600; }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 22px; }
+      .card { padding: 18px 16px; }
+      .use-grid { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Terms &amp; Conditions</h1>
+  <p>PacMate &nbsp;·&nbsp; Last Updated: June 2026</p>
+</header>
+
+<main>
+
+  <!-- 1. Introduction & Acceptance -->
+  <div class="card">
+    <h2><span class="icon-chip">📜</span> 1. Introduction &amp; Acceptance</h2>
+    <p>
+      These Terms &amp; Conditions ("Terms") govern your use of <strong>PacMate</strong>, a travel
+      companion Android app developed by <strong>Ram</strong>. By downloading, installing, or using
+      PacMate you agree to be bound by these Terms.
+    </p>
+    <p>
+      If you do not agree with any part of these Terms, do not use the app.
+      You must be at least <strong>18 years of age</strong> to create an account.
+    </p>
+    <div class="note">
+      These Terms form a legally binding agreement between you and PacMate. Please read them carefully.
+    </div>
+  </div>
+
+  <!-- 2. License Grant -->
+  <div class="card">
+    <h2><span class="icon-chip">📄</span> 2. License Grant</h2>
+    <p>
+      Subject to your compliance with these Terms, Ram grants you a <strong>limited,
+      non-exclusive, non-transferable, revocable licence</strong> to download and use PacMate on
+      your Android device solely for your personal, non-commercial travel purposes.
+    </p>
+    <p>
+      <strong>The PacMate app is licensed to you, not sold.</strong> This licence does not transfer
+      any ownership rights. You may not:
+    </p>
+    <ul>
+      <li>Copy, modify, or create derivative works of the app or its content</li>
+      <li>Reverse-engineer, decompile, or disassemble the app</li>
+      <li>Sub-licence, sell, rent, or otherwise transfer the app to any third party</li>
+      <li>Remove or alter any proprietary notices or labels on the app</li>
+    </ul>
+    <div class="note" style="margin-top:10px;">
+      Your use of PacMate is also subject to the
+      <a href="https://play.google.com/intl/en_us/about/play-terms/" target="_blank">Google Play Terms of Service</a>.
+    </div>
+  </div>
+
+  <!-- 3. About PacMate -->
+  <div class="card">
+    <h2><span class="icon-chip">🎒</span> 3. About PacMate</h2>
+    <p>
+      PacMate is a free travel companion application for Android. It helps backpackers and travellers
+      manage trips, budgets, packing lists, and discover hidden gems. The following features are
+      available in the current version:
+    </p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <strong>Budget Tracker</strong>
+        Multi-currency expense tracking per trip
+      </div>
+      <div class="feature-card">
+        <strong>Packing Lists</strong>
+        Rule-based, weather-aware packing list generator
+      </div>
+      <div class="feature-card">
+        <strong>Hidden Gems Map</strong>
+        Community-contributed local spots on a map
+      </div>
+      <div class="feature-card">
+        <strong>AI Route Planner</strong>
+        Gemini AI generates personalised itineraries
+      </div>
+      <div class="feature-card">
+        <strong>Notifications</strong>
+        In-app alerts for new gems in visited cities
+      </div>
+      <div class="feature-card">
+        <strong>Profile</strong>
+        Travel style, currency, country preferences
+      </div>
+    </div>
+
+    <p style="margin-top:14px;">
+      PacMate is available globally and free to download. For details on how we handle your data,
+      see our <a href="privacy-policy.html">Privacy Policy</a>.
+    </p>
+  </div>
+
+  <!-- 4. Eligibility & User Accounts -->
+  <div class="card">
+    <h2><span class="icon-chip">👤</span> 4. Eligibility &amp; User Accounts</h2>
+    <ul>
+      <li>You must be at least <strong>18 years old</strong> to create an account (or the age of majority in your jurisdiction, if higher).</li>
+      <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+      <li>You are responsible for all activity that occurs under your account.</li>
+      <li>You must provide accurate information during signup. PacMate may suspend accounts that use false or misleading information.</li>
+      <li>You may not share your account with others or create multiple accounts for the purpose of circumventing any restriction.</li>
+      <li>Notify us immediately at <a href="mailto:support@pacmate.app">support@pacmate.app</a> if you suspect unauthorised access to your account.</li>
+    </ul>
+  </div>
+
+  <!-- 5. Acceptable Use Policy -->
+  <div class="card">
+    <h2><span class="icon-chip">📋</span> 5. Acceptable Use Policy</h2>
+    <p>You agree to use PacMate only for lawful purposes and in compliance with these Terms.</p>
+
+    <div class="use-grid">
+      <div class="use-card allowed">
+        <h3>✅ Permitted</h3>
+        <ul>
+          <li>Plan and track personal trips</li>
+          <li>Log genuine travel expenses</li>
+          <li>Create packing lists for your trips</li>
+          <li>Contribute real hidden gem locations you have visited</li>
+          <li>Use the AI route planner for your own travel</li>
+          <li>Share the app with friends</li>
+        </ul>
+      </div>
+      <div class="use-card not-allowed">
+        <h3>🚫 Not Permitted</h3>
+        <ul>
+          <li>Post false, misleading, or fabricated gem locations</li>
+          <li>Upload offensive, illegal, or infringing content</li>
+          <li>Attempt to reverse-engineer or tamper with the app</li>
+          <li>Use automated bots or scrapers</li>
+          <li>Impersonate another person or entity</li>
+          <li>Use the app to facilitate illegal activity</li>
+          <li>Abuse the AI route planner (rate limit: 10 requests/day)</li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="margin-top:14px;">
+      Violation of the acceptable use policy may result in immediate account suspension without notice.
+    </p>
+  </div>
+
+  <!-- 6. User-Generated Content -->
+  <div class="card">
+    <h2><span class="icon-chip">📸</span> 6. User-Generated Content</h2>
+    <p>
+      When you submit a <strong>Hidden Gem</strong> (place name, description, photos, location),
+      you grant PacMate a non-exclusive, worldwide, royalty-free licence to display and share that
+      content within the app for other users to discover.
+    </p>
+    <ul>
+      <li>You confirm that any content you upload is your own or you have the right to share it.</li>
+      <li>You confirm that any gem you post is a real place you have genuinely visited or know to exist.</li>
+      <li>You must not upload photos that contain other people without their consent, or that are offensive, sexually explicit, or illegal.</li>
+      <li>We reserve the right to remove user-generated content that violates these Terms at any time without notice.</li>
+    </ul>
+    <div class="warn">
+      Hidden gem content (name, description, photos, approximate location) is visible to all
+      PacMate users. Do not include personal information such as your address, phone number, or
+      financial details in gem descriptions.
+    </div>
+  </div>
+
+  <!-- 7. Third-Party Services & APIs -->
+  <div class="card">
+    <h2><span class="icon-chip">🔌</span> 7. Third-Party Services &amp; APIs</h2>
+    <p>PacMate integrates several third-party services:</p>
+    <ul>
+      <li><strong>Google Firebase</strong> — authentication, database, storage, notifications</li>
+      <li><strong>Gemini API (Google)</strong> — AI itinerary generation (Route Planner feature)</li>
+      <li><strong>Google Maps &amp; Places API</strong> — maps display and destination search</li>
+      <li><strong>Open-Meteo</strong> — free weather data (no account required)</li>
+      <li><strong>ExchangeRate-API</strong> — currency conversion rates</li>
+    </ul>
+    <p>
+      These services are governed by their own terms and privacy policies. PacMate is not
+      responsible for the availability, accuracy, or actions of any third-party service.
+    </p>
+    <p>
+      The AI itinerary generated by the Route Planner is produced by <strong>Gemini AI</strong>
+      and is provided for informational purposes only. See Section 8 for liability disclaimers.
+    </p>
+  </div>
+
+  <!-- 8. Disclaimer of Liability -->
+  <div class="card">
+    <h2><span class="icon-chip">⚠️</span> 8. Disclaimer of Liability</h2>
+    <p>
+      PacMate is a <strong>planning and information tool</strong>. We are not a travel agent,
+      tour operator, insurance provider, or emergency service. By using PacMate, you acknowledge:
+    </p>
+    <ul>
+      <li><strong>Travel decisions:</strong> All travel decisions, including destinations, accommodation, transport, and activities, are solely your responsibility. PacMate provides information to assist your planning, not professional travel advice.</li>
+      <li><strong>AI-generated itineraries:</strong> Route Planner itineraries are generated by AI. They may contain inaccuracies, outdated information, or suggestions unsuitable for your specific situation. Always verify independently before acting.</li>
+      <li><strong>Hidden Gems accuracy:</strong> Gem content is user-contributed. We cannot guarantee the accuracy, safety, legality, or current status of any listed location. Visit any location at your own risk.</li>
+      <li><strong>Budget data:</strong> Budget calculations and currency conversions are estimates based on live exchange rates. Actual costs may vary.</li>
+      <li><strong>Lost items, delays, accidents, or injuries:</strong> PacMate is not liable for any loss, damage, injury, delay, or inconvenience arising from your travels, regardless of whether you used our app to plan them.</li>
+      <li><strong>App availability:</strong> We do not guarantee uninterrupted or error-free access to PacMate. The app may be updated, suspended, or discontinued at any time.</li>
+      <li><strong>Internet &amp; data charges:</strong> You are responsible for your mobile data usage. Offline features work without data; map and AI features require a connection.</li>
+    </ul>
+    <div class="danger">
+      <strong>Emergency situations:</strong> PacMate is not an emergency service. In any emergency,
+      contact your local emergency services directly (e.g., 112 in India / EU, 911 in the US).
+      Do not rely on this app for life-safety decisions.
+    </div>
+  </div>
+
+  <!-- 9. No Warranty -->
+  <div class="card">
+    <h2><span class="icon-chip">🚫</span> 9. No Warranty</h2>
+    <p>
+      PacMate is provided on an <strong>"as is" and "as available"</strong> basis without any
+      warranty of any kind, express or implied. To the maximum extent permitted by applicable law,
+      Ram expressly disclaims all warranties, including but not limited to:
+    </p>
+    <ul>
+      <li>Implied warranties of merchantability, fitness for a particular purpose, and non-infringement</li>
+      <li>Warranties that the app will meet your requirements or expectations</li>
+      <li>Warranties that data (AI itineraries, exchange rates, weather, gem content) will be accurate, complete, or current</li>
+      <li>Warranties that the app will be uninterrupted, timely, secure, or error-free</li>
+    </ul>
+    <div class="danger">
+      Some jurisdictions do not allow the exclusion of implied warranties. In such jurisdictions,
+      the above exclusions apply only to the fullest extent permitted by local law.
+    </div>
+  </div>
+
+  <!-- 10. Intellectual Property -->
+  <div class="card">
+    <h2><span class="icon-chip">©️</span> 10. Intellectual Property</h2>
+    <ul>
+      <li>The PacMate app, its name, logo, design, code, and original content are the exclusive intellectual property of <strong>Ram</strong>.</li>
+      <li>All rights not expressly granted in these Terms are reserved by Ram.</li>
+      <li>You may not copy, reproduce, republish, distribute, or create derivative works from any part of PacMate without prior written consent from Ram.</li>
+      <li>Third-party trademarks (Google, Firebase, Gemini) remain the property of their respective owners.</li>
+    </ul>
+  </div>
+
+  <!-- 11. Account Termination -->
+  <div class="card">
+    <h2><span class="icon-chip">🔐</span> 11. Account Termination</h2>
+    <p><strong>You may delete your account at any time</strong> from within the app.</p>
+    <p>
+      We reserve the right to suspend or permanently terminate your account without notice if you:
+    </p>
+    <ul>
+      <li>Violate any provision of these Terms</li>
+      <li>Post false, abusive, illegal, or harmful content</li>
+      <li>Attempt to breach the security of the app or its services</li>
+      <li>Engage in any activity that damages PacMate or its users</li>
+    </ul>
+    <p>
+      Upon termination, your licence to use the app is revoked immediately. Your personal data
+      will be deleted in accordance with our <a href="privacy-policy.html">Privacy Policy</a>.
+      User-generated content (hidden gems) may remain visible until manually removed.
+    </p>
+  </div>
+
+  <!-- 12. Changes to Terms -->
+  <div class="card">
+    <h2><span class="icon-chip">🔄</span> 12. Changes to Terms</h2>
+    <p>
+      We may update these Terms at any time. The updated version will be posted in the app and on
+      this page with a revised "Last Updated" date. Continued use of PacMate after the effective
+      date of any changes constitutes your acceptance of the new Terms.
+    </p>
+    <p>
+      For material changes, we will notify you via an in-app notification. If you do not agree
+      with the revised Terms, you must stop using PacMate and delete your account.
+    </p>
+  </div>
+
+  <!-- 13. Governing Law & Dispute Resolution -->
+  <div class="card">
+    <h2><span class="icon-chip">⚖️</span> 13. Governing Law &amp; Dispute Resolution</h2>
+    <p>
+      These Terms are governed by and construed in accordance with the laws of
+      <strong>India</strong>, without regard to its conflict of law provisions.
+    </p>
+    <p>
+      Any dispute, claim, or controversy arising out of or relating to these Terms or the use of
+      PacMate shall be subject to the <strong>exclusive jurisdiction of the courts of India</strong>.
+    </p>
+    <p>
+      <strong>Users are responsible for complying with all local laws and regulations</strong> in
+      their own country or jurisdiction. PacMate makes no representation that the app is appropriate
+      or legal for use in all locations.
+    </p>
+    <div class="note">
+      If any provision of these Terms is found to be unenforceable or invalid under applicable law,
+      that provision shall be modified to the minimum extent necessary to make it enforceable, and
+      the remaining provisions shall continue in full force and effect.
+    </div>
+  </div>
+
+  <!-- 14. Contact Us & Grievance Officer -->
+  <div class="card">
+    <h2><span class="icon-chip">📧</span> 14. Contact Us &amp; Grievance Officer</h2>
+    <p>
+      For questions about these Terms or any concerns about PacMate, please contact us:
+    </p>
+    <ul style="list-style:none; padding:0; margin-top:10px;">
+      <li style="margin-bottom:8px;"><strong>App:</strong> PacMate</li>
+      <li style="margin-bottom:8px;"><strong>Developer:</strong> Ram</li>
+      <li style="margin-bottom:8px;"><strong>Email:</strong> <a href="mailto:support@pacmate.app">support@pacmate.app</a></li>
+      <li style="margin-bottom:8px;"><strong>Jurisdiction:</strong> India</li>
+    </ul>
+
+    <p style="margin-top:14px;">
+      In accordance with the <strong>Information Technology Act, 2000</strong> and the
+      <strong>Digital Personal Data Protection Act, 2023 (DPDPA)</strong>, the Grievance Officer
+      for PacMate is:
+    </p>
+    <ul style="list-style:none; padding:0; margin-top:10px;">
+      <li style="margin-bottom:8px;"><strong>Name:</strong> Ram</li>
+      <li style="margin-bottom:8px;"><strong>Designation:</strong> Grievance Officer, PacMate</li>
+      <li style="margin-bottom:8px;"><strong>Email:</strong> <a href="mailto:support@pacmate.app">support@pacmate.app</a></li>
+      <li><strong>Response Time:</strong> Within 30 days of receipt of the grievance</li>
+    </ul>
+
+    <div class="note" style="margin-top:12px;">
+      Also see: <a href="privacy-policy.html">Privacy Policy</a>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 PacMate. All rights reserved.</p>
+  <p style="margin-top:6px;">
+    <a href="mailto:support@pacmate.app">support@pacmate.app</a>
+    &nbsp;·&nbsp;
+    <a href="privacy-policy.html">Privacy Policy</a>
+  </p>
+</footer>
+
+</body>
+</html>

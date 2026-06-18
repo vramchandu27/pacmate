@@ -89,11 +89,11 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icons/app_icon.png"
+  image_path: "assets/icons/pacmate_icon_final.png"
   remove_alpha_ios: true
-  # Android adaptive icon (API 26+): icon on a white background
-  adaptive_icon_background: "#EBF6FF"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  # Android adaptive icon (API 26+): navy background matches brand
+  adaptive_icon_background: "#1C3461"
+  adaptive_icon_foreground: "assets/icons/pacmate_icon_final.png"
   # Remove old splash icon on Android 12+
   min_sdk_android: 21
   web:

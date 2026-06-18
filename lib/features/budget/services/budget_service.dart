@@ -50,7 +50,7 @@ class BudgetService {
     }
 
     final docRef = await _firebase.tripsRef(_uid).add(trip.toFirestore());
-    await _firebase.logTripCreated(destination);
+    _firebase.logTripCreated(destination);
     return docRef.id;
   }
 
@@ -115,7 +115,7 @@ class BudgetService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    await _firebase.logExpenseAdded(category, convertedAmountINR);
+    _firebase.logExpenseAdded(category, convertedAmountINR);
     return docRef.id;
   }
 
@@ -252,3 +252,7 @@ final tripExpensesProvider =
 final allTripsProvider = StreamProvider<List<BudgetModel>>((ref) {
   return ref.watch(budgetServiceProvider).getAllTrips();
 });
+
+// Tracks which trip is currently visible in the budget carousel.
+// Updated by BudgetScreen on page change; read by the home-screen FAB.
+final selectedCarouselTripProvider = StateProvider<BudgetModel?>((ref) => null);

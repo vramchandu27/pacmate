@@ -11,7 +11,9 @@ import '../../../core/api/weather_service.dart';
 import '../../../core/config/env_config.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/budget/services/budget_service.dart';
 import '../../../shared/data/destinations_data.dart';
+import '../../../shared/models/budget_model.dart';
 import '../models/packing_input.dart';
 import '../models/packing_result.dart';
 import '../services/packing_engine.dart';
@@ -666,6 +668,23 @@ class _AddPackingListSheetState extends ConsumerState<_AddPackingListSheet> {
   Map<String, dynamic>? _selectedTemplate;
   bool _ignoreNextDestChange = false;
 
+  // Trip-linked packing
+  String? _linkedTripId;
+
+  void _applyTrip(BudgetModel trip) {
+    _ignoreNextDestChange = true;
+    _destCtrl.text = trip.destination;
+    _selectedPlace  = trip.destination;
+    setState(() {
+      _linkedTripId = trip.id;
+      _startDate    = trip.startDate;
+      _endDate      = trip.endDate;
+      _validationError = null;
+    });
+    _removeOverlay();
+    _fetchWeather();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1065,8 +1084,9 @@ class _AddPackingListSheetState extends ConsumerState<_AddPackingListSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.danger),
         );
-        setState(() => _generating = false);
       }
+    } finally {
+      if (mounted) setState(() => _generating = false);
     }
   }
 
@@ -1103,7 +1123,10 @@ class _AddPackingListSheetState extends ConsumerState<_AddPackingListSheet> {
               Expanded(
                 child: ListView(
                   controller: controller,
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                  padding: EdgeInsets.fromLTRB(
+                    24, 12, 24,
+                    24 + MediaQuery.of(sheetCtx).viewPadding.bottom,
+                  ),
                 children: [
                   Container(
                     padding: const EdgeInsets.all(18),
@@ -1176,6 +1199,11 @@ class _AddPackingListSheetState extends ConsumerState<_AddPackingListSheet> {
                     const SizedBox(height: 20),
                     _buildTemplateSection(templates),
                   ],
+
+                  const SizedBox(height: 20),
+
+                  // ── Pack for a Trip ────────────────────────────────────────
+                  _buildTripPicker(),
 
                   const SizedBox(height: 20),
 
@@ -1387,6 +1415,151 @@ class _AddPackingListSheetState extends ConsumerState<_AddPackingListSheet> {
       },
     );
   }
+
+  // ── Trip picker ────────────────────────────────────────────────────────────
+
+  Widget _buildTripPicker() {
+    final allTrips = ref.watch(allTripsProvider).valueOrNull ?? [];
+    final now   = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final trips = allTrips.where((t) {
+      if (t.completedAt != null) return false;
+      final end = DateTime(t.endDate.year, t.endDate.month, t.endDate.day);
+      return !end.isBefore(today); // active or upcoming
+    }).toList()
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+
+    if (trips.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Pack for a Trip'),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 72,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: trips.length,
+            separatorBuilder: (context, i) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              final trip   = trips[i];
+              final picked = _linkedTripId == trip.id;
+              final start  = trip.startDate;
+              final end    = trip.endDate;
+              final fmt    = '${start.day} ${_mon(start.month)} – ${end.day} ${_mon(end.month)}';
+              final isActive = !DateTime(start.year, start.month, start.day).isAfter(today) &&
+                               !DateTime(end.year, end.month, end.day).isBefore(today);
+
+              return GestureDetector(
+                onTap: () => _applyTrip(trip),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: picked ? AppColors.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: picked
+                          ? AppColors.primary
+                          : isActive
+                              ? AppColors.success.withAlpha(120)
+                              : AppColors.lightOutline,
+                      width: picked ? 2 : 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: picked
+                            ? AppColors.primary.withAlpha(40)
+                            : Colors.black.withAlpha(6),
+                        blurRadius: picked ? 10 : 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.flight_takeoff_rounded,
+                            size: 12,
+                            color: picked
+                                ? Colors.white70
+                                : isActive
+                                    ? AppColors.success
+                                    : AppColors.lightOnSurfaceVar,
+                          ),
+                          const SizedBox(width: 5),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 140),
+                            child: Text(
+                              trip.destination.split(',').first,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: picked ? Colors.white : AppColors.navy,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          if (picked) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.check_circle_rounded,
+                                size: 14, color: Colors.white),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        fmt,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          color: picked
+                              ? Colors.white70
+                              : AppColors.lightOnSurfaceVar,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(child: Divider(color: AppColors.lightOutline, height: 1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                'or fill manually',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 11,
+                  color: AppColors.lightOnSurfaceVar.withAlpha(180),
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: AppColors.lightOutline, height: 1)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _mon(int m) => const [
+        '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ][m];
 
   // ── Template section ───────────────────────────────────────────────────────
 
@@ -1984,8 +2157,9 @@ class _ReviewPackingSheetState extends ConsumerState<_ReviewPackingSheet> {
               content: Text('Error: $e'),
               backgroundColor: AppColors.danger),
         );
-        setState(() => _saving = false);
       }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 

@@ -108,6 +108,20 @@ class _GemsMapScreenState extends ConsumerState<GemsMapScreen>
     }
   }
 
+  // ── Navigation helpers ────────────────────────────────────────────────────
+
+  Future<void> _openAddGem([String? url]) async {
+    await context.push(url ?? AppRoutes.addGem);
+    if (!mounted) return;
+    // Clear all tab caches so every tab reloads fresh on next visit.
+    _tabGems.clear();
+    _tabCursors.clear();
+    for (final t in GemTab.values) {
+      _tabHasMore[t] = true;
+    }
+    _refreshTab(ref.read(activeGemTabProvider));
+  }
+
   // ── Pagination helpers ─────────────────────────────────────────────────────
 
   Future<void> _refreshTab(GemTab tab) async {
@@ -286,7 +300,7 @@ class _GemsMapScreenState extends ConsumerState<GemsMapScreen>
       gemMarkers: markers,
       placesService: ref.read(placesServiceProvider),
       initialLocation: initialPos,
-      onAddGem: (latLng) => context.push(
+      onAddGem: (latLng) => _openAddGem(
         '${AppRoutes.addGem}?lat=${latLng.latitude}&lng=${latLng.longitude}',
       ),
     );
@@ -1041,15 +1055,23 @@ class _GemsMapScreenState extends ConsumerState<GemsMapScreen>
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.explore_outlined,
+                                Icon(
+                                  ref.watch(currentPositionProvider).isLoading
+                                      ? Icons.gps_fixed
+                                      : (_locationDenied
+                                          ? Icons.location_disabled_rounded
+                                          : Icons.explore_outlined),
                                   size: 40,
                                   color: AppColors.teal,
                                 ),
                                 const SizedBox(height: 10),
-                                const Text(
-                                  'No community gems here yet',
-                                  style: TextStyle(
+                                Text(
+                                  ref.watch(currentPositionProvider).isLoading
+                                      ? 'Getting your location…'
+                                      : (_locationDenied
+                                          ? 'Location access needed'
+                                          : 'No community gems here yet'),
+                                  style: const TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -1068,7 +1090,7 @@ class _GemsMapScreenState extends ConsumerState<GemsMapScreen>
                                 ),
                                 const SizedBox(height: 14),
                                 ElevatedButton.icon(
-                                  onPressed: () => context.push(AppRoutes.addGem),
+                                  onPressed: _openAddGem,
                                   icon: const Icon(Icons.add, size: 18),
                                   label: const Text(
                                     'Add a Gem',
@@ -1435,7 +1457,7 @@ class _GemsMapScreenState extends ConsumerState<GemsMapScreen>
       },
       child: FloatingActionButton(
         heroTag: 'gems_add_fab',
-        onPressed: () => context.push(AppRoutes.addGem),
+        onPressed: _openAddGem,
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -1812,24 +1834,24 @@ class _GemMapWidgetState extends State<_GemMapWidget> {
       );
     } catch (e) {
       if (!mounted) return;
-      final msg = e.toString().replaceFirst('Exception: ', '');
-      final friendly =
-          msg.contains('REQUEST_DENIED') || msg.contains('not authorized')
-          ? 'Geocoding API not enabled. Go to GCP Console → APIs & Services → enable Geocoding API.'
-          : msg.contains('OVER_DAILY_LIMIT') || msg.contains('quota')
+      final msg = e.toString();
+      // REQUEST_DENIED = Geocoding API not enabled in GCP Console. Silently skip
+      // map panning — the gem search results are already shown in the list.
+      if (msg.contains('REQUEST_DENIED') || msg.contains('not authorized')) return;
+      final friendly = msg.contains('OVER_DAILY_LIMIT') || msg.contains('quota')
           ? 'Geocoding quota exceeded. Try again tomorrow.'
           : msg.contains('INVALID_REQUEST') || msg.contains('400')
           ? 'Invalid search query. Try a different location name.'
-          : 'Search failed: $msg';
+          : 'Location search failed. Try a different query.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             friendly,
             style: const TextStyle(fontFamily: 'Poppins'),
           ),
-          backgroundColor: AppColors.danger,
+          backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 6),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
