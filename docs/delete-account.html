@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete Account — PacMate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    header {
+      background: #1565C0;
+      color: #fff;
+      padding: 36px 24px 28px;
+      text-align: center;
+    }
+    header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; }
+    header p  { font-size: 13px; opacity: 0.82; margin-top: 6px; }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 22px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1565C0;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-chip {
+      background: #e8f0fe;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 15px;
+    }
+
+    p { margin-bottom: 10px; color: #374151; }
+    p:last-child { margin-bottom: 0; }
+
+    /* Step list */
+    .steps { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+    .steps li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      background: #1565C0;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 2px;
+    }
+    .step-text { color: #374151; }
+    .step-text strong { color: #1e293b; }
+
+    /* Data table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #475569;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 10px 12px;
+      color: #374151;
+      border-top: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-deleted  { background: #fee2e2; color: #b91c1c; }
+    .badge-kept     { background: #fef9c3; color: #92400e; }
+    .badge-public   { background: #dcfce7; color: #166534; }
+
+    /* Warning box */
+    .warn {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      color: #92400e;
+      font-size: 14px;
+    }
+    .warn-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+    /* Email button */
+    .email-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1565C0;
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      margin-top: 14px;
+      transition: background 0.15s;
+    }
+    .email-btn:hover { background: #1251a3; }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+      padding: 24px 16px 40px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🗑️ Delete Your PacMate Account</h1>
+  <p>PacMate — Your All-in-One Travel Companion</p>
+</header>
+
+<main>
+
+  <!-- How to delete in-app -->
+  <div class="card">
+    <h2><span class="icon-chip">📱</span> Delete Account from the App</h2>
+    <p>You can permanently delete your account directly inside the PacMate app. No need to contact us.</p>
+    <ul class="steps">
+      <li>
+        <span class="step-num">1</span>
+        <span class="step-text">Open <strong>PacMate</strong> on your device and make sure you are signed in.</span>
+      </li>
+      <li>
+        <span class="step-num">2</span>
+        <span class="step-text">Tap your <strong>profile avatar</strong> on the home screen to open your profile.</span>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <span class="step-text">Scroll down and tap <strong>Settings</strong>.</span>
+      </li>
+      <li>
+        <span class="step-num">4</span>
+        <span class="step-text">Tap <strong>Delete Account</strong> at the bottom of the page.</span>
+      </li>
+      <li>
+        <span class="step-num">5</span>
+        <span class="step-text">Confirm the deletion. Your account and all associated data will be <strong>permanently removed immediately</strong>.</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Warning -->
+  <div class="warn">
+    <span class="warn-icon">⚠️</span>
+    <span>This action is <strong>irreversible</strong>. Once deleted, your account and data cannot be recovered. Make sure you have exported or noted any information you wish to keep.</span>
+  </div>
+
+  <!-- What gets deleted -->
+  <div class="card">
+    <h2><span class="icon-chip">🗂️</span> What Data Is Deleted or Kept</h2>
+    <p>When you delete your account, here is what happens to each type of data:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Data Type</th>
+          <th>Action</th>
+          <th>Retention Period</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Account credentials (email, password)</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Profile info (name, photo, bio)</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Trips &amp; budget data</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Expenses</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Packing lists</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Medicine reminders</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Family links</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Chat messages</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Notifications</td>
+          <td><span class="badge badge-deleted">Deleted immediately</span></td>
+          <td>None</td>
+        </tr>
+        <tr>
+          <td>Hidden Gems you submitted</td>
+          <td><span class="badge badge-public">Remain public</span></td>
+          <td>Indefinitely — gems are community content. Your name is removed but the location stays.</td>
+        </tr>
+        <tr>
+          <td>Anonymous usage analytics</td>
+          <td><span class="badge badge-kept">May be retained</span></td>
+          <td>Up to 14 months (Firebase Analytics standard)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Manual request -->
+  <div class="card">
+    <h2><span class="icon-chip">✉️</span> Can't Access the App? Request by Email</h2>
+    <p>If you are unable to sign in or access the app to delete your account, you can email us and we will manually delete your account and all associated data within <strong>7 business days</strong>.</p>
+    <p>Please include the email address registered with your PacMate account in your request.</p>
+    <a class="email-btn" href="mailto:vramchandu27@gmail.com?subject=PacMate%20%E2%80%94%20Delete%20My%20Account%20Request">
+      ✉️ Email Us to Delete Account
+    </a>
+  </div>
+
+</main>
+
+<footer>
+  &copy; 2025 PacMate. All rights reserved.
+</footer>
+
+</body>
+</html>
