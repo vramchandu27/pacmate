@@ -411,6 +411,10 @@ class _TripDetailSheet extends ConsumerWidget {
     final expensesAsync = ref.watch(tripExpensesProvider(trip.id));
     final fmtDate = DateFormat('d MMMM yyyy');
     final days = trip.endDate.difference(trip.startDate).inDays + 1;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startDay = DateTime(trip.startDate.year, trip.startDate.month, trip.startDate.day);
+    final isUpcoming = trip.completedAt == null && startDay.isAfter(today);
     final overBudget = trip.totalSpent > trip.totalBudget;
     final remaining  = trip.totalBudget - trip.totalSpent;
     final accentColor = overBudget ? AppColors.danger : AppColors.success;
@@ -429,6 +433,7 @@ class _TripDetailSheet extends ConsumerWidget {
       initialChildSize: 0.6,
       minChildSize: 0.4,
       maxChildSize: 0.92,
+      expand: false,
       builder: (ctx, scrollCtrl) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -563,6 +568,41 @@ class _TripDetailSheet extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   // ── Category breakdown from expenses ──────────────────────
+                  if (isUpcoming) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 28),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFEEF0F3)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.event_rounded,
+                              color: AppColors.warning, size: 32),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Trip hasn\'t started yet',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Starts ${fmtDate.format(trip.startDate)}',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 12,
+                              color: AppColors.lightOnSurfaceVar,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[ // past or active — show real expense data
                   expensesAsync.when(
                     loading: () => const Center(
                         child: CircularProgressIndicator(
@@ -664,6 +704,7 @@ class _TripDetailSheet extends ConsumerWidget {
                       );
                     },
                   ),
+                  ],  // end else [...] for past/active expense section
                 ],
               ),
             ),

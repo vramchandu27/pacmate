@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/gemini_api_service.dart';
@@ -85,8 +88,11 @@ class PackingService {
 
   /// Finds a PacMate user by email and adds them to the list's sharedWith array.
   Future<String> shareListWith(String listId, String email) async {
-    final query = await _firebase.usersRef
-        .where('email', isEqualTo: email.trim().toLowerCase())
+    final emailHash = sha256
+        .convert(utf8.encode(email.trim().toLowerCase()))
+        .toString();
+    final query = await _firebase.publicProfilesRef
+        .where('emailHash', isEqualTo: emailHash)
         .limit(1)
         .get();
 
@@ -95,7 +101,7 @@ class PackingService {
     }
 
     final targetUid  = query.docs.first.id;
-    final targetName = query.docs.first.data()['fullName'] as String? ?? email;
+    final targetName = query.docs.first.data()['displayName'] as String? ?? email;
 
     if (targetUid == _uid) {
       throw Exception('You cannot share a list with yourself.');

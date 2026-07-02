@@ -507,9 +507,9 @@ final trendingGemsProvider =
   return ref.read(gemsServiceProvider).getTrendingGems(category: category);
 });
 
-/// Resolves the device's current position once. Returns null only if permission denied.
-/// Tries medium accuracy first (20s), then falls back to low accuracy (15s) so slow
-/// GPS receivers on budget phones don't silently return null.
+/// Resolves the device's current position. Returns null only if permission denied.
+/// Uses last-known position as a fast path so the Nearby tab loads instantly
+/// on cold start without waiting for a fresh GPS lock (which can take 20-35s).
 final currentPositionProvider = FutureProvider<Position?>((ref) async {
   try {
     var permission = await Geolocator.checkPermission();
@@ -520,6 +520,12 @@ final currentPositionProvider = FutureProvider<Position?>((ref) async {
         permission == LocationPermission.deniedForever) {
       return null;
     }
+    // Fast path: last known position is cached by the OS and returns instantly.
+    // This covers every case except a totally fresh device with no GPS history.
+    final last = await Geolocator.getLastKnownPosition();
+    if (last != null) return last;
+
+    // Slow path: no cached fix — wait for a fresh GPS lock.
     try {
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(

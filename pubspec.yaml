@@ -6,7 +6,9 @@ publish_to: 'none'
 # Bump patch for bug fixes, minor for new features, major for breaking changes.
 # Current AAB history:
 #   1.0.0+1  — Initial release
-version: 1.0.0+1
+#   1.0.0+2  — Fix Google Sign-In (Play App Signing SHA-1 added to Firebase)
+#   1.0.0+3  — Fix Firestore permission-denied on first Google Sign-In login
+version: 1.0.0+3
 
 environment:
   sdk: ^3.10.0
@@ -32,8 +34,6 @@ dependencies:
 
   # Local Storage
   shared_preferences: ^2.3.5
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
 
   # Firebase
   firebase_core: ^3.6.0
@@ -69,12 +69,12 @@ dependencies:
   url_launcher: ^6.3.1
   share_plus: ^10.1.4
   purchases_flutter: ^8.0.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  hive_generator: ^2.0.1
   build_runner: ^2.4.13
   flutter_launcher_icons: ^0.14.3
 

@@ -220,8 +220,14 @@ class _GemsMapScreenState extends ConsumerState<GemsMapScreen>
     ref.watch(tripFilterEnabledProvider);
 
     // Reload when tab changes (if not already loaded for that tab).
+    // For Nearby specifically, also retry if previous attempt got no gems due to
+    // a location failure — GPS might be ready now.
     ref.listen(activeGemTabProvider, (prev, next) {
-      if (prev != next && _tabGems[next] == null) _refreshTab(next);
+      if (prev != next) {
+        final needsLoad = _tabGems[next] == null ||
+            (next == GemTab.nearby && _locationDenied);
+        if (needsLoad) _refreshTab(next);
+      }
     });
 
     // Reset pagination when category changes.

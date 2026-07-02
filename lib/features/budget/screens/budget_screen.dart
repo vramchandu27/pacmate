@@ -569,11 +569,9 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
     final budgetFz = (cardH * 0.138).clamp(18.0, 27.0);
     final labelFz  = (cardH * 0.058).clamp(9.0, 12.0);
 
-    if (isInProgress || trip.isActive) {
-      final badgeLabel = isInProgress ? 'ACTIVE' : 'UPCOMING';
-      final badgeDot   = isInProgress
-          ? const Color(0xFFFFB74D)
-          : const Color(0xFF69F0AE);
+    if (isInProgress) {
+      const badgeLabel = 'ACTIVE';
+      const badgeDot   = Color(0xFFFFB74D);
 
       return ClipRRect(
         borderRadius: BorderRadius.circular(20),
@@ -1025,6 +1023,7 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
         final detailToday = DateTime(now.year, now.month, now.day);
         final tripInProgress = trip.completedAt == null &&
             !detailStart.isAfter(detailToday) && !detailEnd.isBefore(detailToday);
+        final isUpcoming = trip.completedAt == null && detailStart.isAfter(detailToday);
 
         final hp = w < 360 ? 14.0 : 20.0;
         return SingleChildScrollView(
@@ -1039,11 +1038,15 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
                 _buildBudgetOverview(trip),
                 const SizedBox(height: 24),
               ],
-              if (sortedCategories.isNotEmpty) ...[
-                _buildCategoryBreakdown(sortedCategories, trip.totalBudget, trip.currency),
-                const SizedBox(height: 24),
+              if (!isUpcoming) ...[
+                if (sortedCategories.isNotEmpty) ...[
+                  _buildCategoryBreakdown(sortedCategories, trip.totalBudget, trip.currency),
+                  const SizedBox(height: 24),
+                ],
+                _buildRecentExpenses(trip.id, expenses),
+              ] else ...[
+                _buildUpcomingPlaceholder(trip),
               ],
-              _buildRecentExpenses(trip.id, expenses),
               if (tripInProgress) ...[
                 const SizedBox(height: 24),
                 _buildCompleteTripSection(trip),
@@ -1216,6 +1219,63 @@ class _BudgetScreenState extends ConsumerState<BudgetScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildUpcomingPlaceholder(BudgetModel trip) {
+    final daysUntil = trip.startDate.difference(DateTime.now()).inDays + 1;
+    final fmt = DateFormat('d MMMM yyyy');
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEEF0F3)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.warning.withAlpha(20),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.event_rounded,
+                color: AppColors.warning, size: 28),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Trip hasn\'t started yet',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Starts ${fmt.format(trip.startDate)}  ·  $daysUntil ${daysUntil == 1 ? 'day' : 'days'} to go',
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 13,
+              color: AppColors.lightOnSurfaceVar,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Expenses will appear here once the trip begins.',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 12,
+              color: AppColors.lightOnSurfaceVar,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

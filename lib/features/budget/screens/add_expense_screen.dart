@@ -240,6 +240,27 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       return;
     }
 
+    // Block adding expenses to upcoming or completed trips.
+    final now0 = DateTime.now();
+    final today0 = DateTime(now0.year, now0.month, now0.day);
+    final tripStart = DateTime(trip.startDate.year, trip.startDate.month, trip.startDate.day);
+    final tripEnd   = DateTime(trip.endDate.year,   trip.endDate.month,   trip.endDate.day);
+    final inProgress = trip.completedAt == null &&
+        !tripStart.isAfter(today0) && !tripEnd.isBefore(today0);
+    if (!inProgress) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            trip.completedAt != null
+                ? 'This trip is completed. Cannot add expenses.'
+                : 'This trip hasn\'t started yet. Cannot add expenses.',
+          ),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
     final remaining = trip.totalBudget - trip.totalSpent;
     if (_convertedAmount > remaining) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -73,18 +73,15 @@ class _GemDetailScreenState extends ConsumerState<GemDetailScreen>
         return;
       }
 
-      // Fetch display name of the user who added this gem
+      // Fetch display name from publicProfiles — readable by any auth user.
       String displayName = '';
       try {
         final userDoc = await FirebaseFirestore.instance
-            .collection('users')
+            .collection('publicProfiles')
             .doc(gem.addedBy)
             .get();
         if (userDoc.exists) {
-          final data = userDoc.data()!;
-          displayName = (data['displayName'] as String? ?? '').isNotEmpty
-              ? data['displayName'] as String
-              : (data['name'] as String? ?? '');
+          displayName = userDoc.data()?['displayName'] as String? ?? '';
         }
       } catch (_) {}
 

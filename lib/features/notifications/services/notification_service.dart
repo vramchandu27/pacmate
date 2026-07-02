@@ -142,10 +142,16 @@ final notificationsProvider = StreamProvider<List<NotificationModel>>((ref) asyn
       .toSet();
 
   yield* ref.read(notificationServiceProvider).getNotifications().map((list) {
+    final cutoff7d = now.subtract(const Duration(days: 7));
     return list.where((n) {
       // Drop broadcasts that predate this user's account
       if (n.userId == 'broadcast' && accountCreatedAt != null) {
         if (n.createdAt.isBefore(accountCreatedAt)) return false;
+      }
+
+      // Drop stale gem broadcasts older than 7 days — they're no longer relevant
+      if (n.userId == 'broadcast' && n.type == NotificationType.gemAdded) {
+        if (n.createdAt.isBefore(cutoff7d)) return false;
       }
 
       // Only gem broadcasts need location filtering
@@ -153,7 +159,7 @@ final notificationsProvider = StreamProvider<List<NotificationModel>>((ref) asyn
         return true;
       }
 
-      // 1️⃣ Show if gem city OR country matches any upcoming trip destination
+      // 1️⃣ Show if gem city OR country matches any active trip destination
       final gemCity    = (n.metadata['city']    as String? ?? '').toLowerCase();
       final gemCountry = (n.metadata['country'] as String? ?? '').toLowerCase();
       final gemWords   = {gemCity, gemCountry}.where((s) => s.length > 2);
@@ -173,9 +179,9 @@ final notificationsProvider = StreamProvider<List<NotificationModel>>((ref) asyn
         }
       }
 
-      // 3️⃣ No location permission + no active trip match
-      // → show all gems so user never misses anything
-      return true;
+      // 3️⃣ No location permission + no active trip match → hide gem broadcasts
+      // (avoids surfacing stale test/dev data and irrelevant gems to new users)
+      return false;
     }).toList();
   });
 });

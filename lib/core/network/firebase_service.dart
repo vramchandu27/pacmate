@@ -53,6 +53,9 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get usersRef =>
       firestore.collection('users');
 
+  CollectionReference<Map<String, dynamic>> get publicProfilesRef =>
+      firestore.collection('publicProfiles');
+
   // User-scoped subcollections — data lives under users/{uid}/...
   CollectionReference<Map<String, dynamic>> tripsRef(String uid) =>
       usersRef.doc(uid).collection('trips');

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -99,19 +98,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     }
   }
 
-  Future<String?> _uploadPhoto(String uid) async {
-    if (_photoFile == null) return null;
-    try {
-      final ref = FirebaseStorage.instance.ref('avatars/$uid.jpg');
-      await ref
-          .putFile(_photoFile!, SettableMetadata(contentType: 'image/jpeg'))
-          .timeout(const Duration(seconds: 30));
-      return await ref.getDownloadURL().timeout(const Duration(seconds: 10));
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCountry == null || _selectedCountry!.isEmpty) {
@@ -132,10 +118,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final user = FirebaseAuth.instance.currentUser!;
       final authService = ref.read(authServiceProvider);
 
-      // Upload photo first so URL is available for profile update
-      final photoUrl = await _uploadPhoto(user.uid);
+      // Upload via authService so the storage path matches the rest of the app
+      // (profile_photos/{uid}/avatar.jpg). uploadProfilePhoto also writes
+      // photoUrl to Firestore, so we don't include it in the batch below.
+      String? photoUrl;
+      if (_photoFile != null) {
+        photoUrl = await authService.uploadProfilePhoto(_photoFile!);
+      }
 
-      // Save critical data to Firestore in parallel
       await Future.wait([
         authService.updateProfile({
           'fullName': _nameCtrl.text.trim(),
@@ -144,12 +134,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           'homeCountry': _selectedCountry!,
           'travelType': 'solo',
           'avatar': _avatars[_selectedAvatar]['emoji'],
-          'photoUrl': ?photoUrl,
         }),
         authService.markProfileComplete(),
       ]);
 
-      // Firebase Auth display name + photo — best-effort, don't block navigation
       user.updateDisplayName(_nameCtrl.text.trim()).ignore();
       if (photoUrl != null) user.updatePhotoURL(photoUrl).ignore();
 
@@ -491,51 +479,65 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     );
   }
 
-  // ── Country dropdown ─────────────────────────────────────────────────────────
+  // ── Country picker ───────────────────────────────────────────────────────────
 
   Widget _buildCountryDropdown() {
     final isSelected = _selectedCountry != null;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.lightBackground,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isSelected ? AppColors.primary : AppColors.danger.withAlpha(180),
-          width: isSelected ? 1 : 1.2,
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedCountry,
-          isExpanded: true,
-          hint: const Text(
-            'Select your country *',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              color: AppColors.lightOnSurfaceVar,
-            ),
-          ),
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.lightOnSurfaceVar),
-          style: const TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.navy,
-          ),
-          dropdownColor: Colors.white,
+    return GestureDetector(
+      onTap: _showCountryPicker,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        decoration: BoxDecoration(
+          color: AppColors.lightBackground,
           borderRadius: BorderRadius.circular(14),
-          items: _countries.map((c) {
-            return DropdownMenuItem(value: c, child: Text(c));
-          }).toList(),
-          onChanged: (v) {
-            if (v != null) setState(() => _selectedCountry = v);
-          },
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary
+                : AppColors.danger.withAlpha(180),
+            width: isSelected ? 1.0 : 1.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Text('🌍', style: TextStyle(fontSize: 20)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _selectedCountry ?? 'Select your country *',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected
+                      ? AppColors.navy
+                      : AppColors.lightOnSurfaceVar,
+                ),
+              ),
+            ),
+            Icon(
+              isSelected
+                  ? Icons.check_circle_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              color: isSelected
+                  ? AppColors.primary
+                  : AppColors.lightOnSurfaceVar,
+              size: 22,
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _showCountryPicker() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _CountryPickerSheet(countries: _countries),
+    );
+    if (result != null) setState(() => _selectedCountry = result);
   }
 
   // ── Save button ──────────────────────────────────────────────────────────────
@@ -634,6 +636,179 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Country picker bottom sheet ──────────────────────────────────────────────
+
+class _CountryPickerSheet extends StatefulWidget {
+  const _CountryPickerSheet({required this.countries});
+  final List<String> countries;
+
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  late List<String> _filtered;
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.countries;
+    _searchCtrl.addListener(_onSearch);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.removeListener(_onSearch);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onSearch() {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    setState(() {
+      _filtered = q.isEmpty
+          ? widget.countries
+          : widget.countries
+              .where((c) => c.toLowerCase().contains(q))
+              .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    final screenH = MediaQuery.of(context).size.height;
+
+    return Container(
+      height: (screenH * 0.75 - bottomPad).clamp(280.0, screenH * 0.75),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(top: 12, bottom: 20),
+            decoration: BoxDecoration(
+              color: Colors.black.withAlpha(30),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Title
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Text('🌍', style: TextStyle(fontSize: 22)),
+                SizedBox(width: 10),
+                Text(
+                  'Select Home Country',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Search field
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.lightOutline),
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: AppColors.navy,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Search country…',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                    color: AppColors.lightOnSurfaceVar,
+                  ),
+                  prefixIcon: Icon(Icons.search_rounded,
+                      color: AppColors.lightOnSurfaceVar, size: 20),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Divider
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          // Country list
+          Expanded(
+            child: _filtered.isEmpty
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('🔍',
+                            style: TextStyle(fontSize: 36)),
+                        SizedBox(height: 10),
+                        Text(
+                          'No countries found',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 14,
+                            color: AppColors.lightOnSurfaceVar,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.only(top: 4, bottom: 16),
+                    itemCount: _filtered.length,
+                    separatorBuilder: (_, __) => const Divider(
+                        height: 1,
+                        indent: 20,
+                        endIndent: 20,
+                        color: Color(0xFFF1F5F9)),
+                    itemBuilder: (context, i) {
+                      final country = _filtered[i];
+                      return InkWell(
+                        onTap: () => Navigator.of(context).pop(country),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 14),
+                          child: Text(
+                            country,
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.navy,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,6 +111,10 @@ class AuthService {
 
     final userCredential = await _auth.signInWithCredential(credential);
     final user = userCredential.user!;
+
+    // Force token refresh so Firestore security rules receive the auth token
+    // before the first read/write — prevents permission-denied on first login.
+    await user.getIdToken(true);
 
     // Check Firestore doc directly — isNewUser can be unreliable when an
     // account was deleted from Firebase Console and re-created with the same
@@ -234,6 +240,14 @@ class AuthService {
       ...safe,
       'lastSeen': FieldValue.serverTimestamp(),
     });
+
+    // Mirror public-facing fields to publicProfiles so other users can read them.
+    final publicUpdate = <String, dynamic>{};
+    if (safe.containsKey('fullName')) publicUpdate['displayName'] = safe['fullName'];
+    if (safe.containsKey('photoUrl')) publicUpdate['photoUrl'] = safe['photoUrl'];
+    if (publicUpdate.isNotEmpty) {
+      await _firebase.publicProfilesRef.doc(uid).update(publicUpdate);
+    }
   }
 
   Future<void> markProfileComplete() async {
@@ -263,6 +277,11 @@ class AuthService {
 
   // ── Private Helpers ────────────────────────────────────────────────────────
 
+  static String _hashEmail(String email) {
+    final normalized = email.trim().toLowerCase();
+    return sha256.convert(utf8.encode(normalized)).toString();
+  }
+
   Future<void> _createUserProfile({
     required String uid,
     required String email,
@@ -279,7 +298,14 @@ class AuthService {
       lastSeen: now,
     );
 
-    await _firebase.usersRef.doc(uid).set(user.toFirestore());
+    await Future.wait([
+      _firebase.usersRef.doc(uid).set(user.toFirestore()),
+      _firebase.publicProfilesRef.doc(uid).set({
+        'displayName': fullName,
+        'photoUrl': photoUrl ?? '',
+        'emailHash': _hashEmail(email),
+      }),
+    ]);
 
     // FCM token — best-effort, don't block profile creation
     _firebase.saveFcmToken().ignore();

@@ -51,6 +51,14 @@ android {
             dartDefines["GOOGLE_MAPS_KEY"] ?: ""
     }
 
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "pacmate-v${variant.versionName}.apk"
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (keyPropertiesFile.exists()) {

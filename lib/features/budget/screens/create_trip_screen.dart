@@ -474,7 +474,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
         _isLoading         = false;
       });
       await Future.delayed(const Duration(milliseconds: 2800));
-      if (mounted) context.go(AppRoutes.budget);
+      if (mounted) context.go(AppRoutes.home);
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
@@ -997,7 +997,7 @@ class _CreateTripScreenState extends ConsumerState<CreateTripScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: () => context.go(AppRoutes.budget),
+                            onPressed: () => context.go(AppRoutes.home),
                             icon: const Icon(Icons.dashboard_rounded, size: 18),
                             label: const Text(
                               'Go to Dashboard',

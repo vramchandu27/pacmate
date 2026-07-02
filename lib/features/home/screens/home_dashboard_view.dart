@@ -2453,6 +2453,40 @@ class _WavingHandState extends State<_WavingHand>
 // Forces the user to pick their country before using the app.
 // ─────────────────────────────────────────────────────────────────────────────
 
+const _countryCurrencyMap = {
+  'Afghanistan': 'USD',   'Albania': 'EUR',        'Algeria': 'USD',
+  'Argentina': 'USD',     'Armenia': 'USD',         'Australia': 'AUD',
+  'Austria': 'EUR',       'Azerbaijan': 'USD',      'Bahrain': 'AED',
+  'Bangladesh': 'USD',    'Belgium': 'EUR',         'Bhutan': 'INR',
+  'Bolivia': 'USD',       'Brazil': 'BRL',          'Cambodia': 'THB',
+  'Canada': 'CAD',        'Chile': 'USD',           'China': 'HKD',
+  'Colombia': 'USD',      'Croatia': 'EUR',         'Czech Republic': 'EUR',
+  'Denmark': 'NOK',       'Egypt': 'USD',           'Ethiopia': 'USD',
+  'Finland': 'EUR',       'France': 'EUR',          'Georgia': 'USD',
+  'Germany': 'EUR',       'Ghana': 'USD',           'Greece': 'EUR',
+  'Hungary': 'EUR',       'Iceland': 'USD',         'India': 'INR',
+  'Indonesia': 'IDR',     'Iran': 'USD',            'Iraq': 'USD',
+  'Ireland': 'EUR',       'Israel': 'USD',          'Italy': 'EUR',
+  'Japan': 'JPY',         'Jordan': 'AED',          'Kazakhstan': 'USD',
+  'Kenya': 'USD',         'Kuwait': 'AED',          'Laos': 'THB',
+  'Lebanon': 'USD',       'Malaysia': 'MYR',        'Maldives': 'USD',
+  'Mexico': 'MXN',        'Mongolia': 'USD',        'Morocco': 'USD',
+  'Myanmar': 'THB',       'Nepal': 'INR',           'Netherlands': 'EUR',
+  'New Zealand': 'NZD',   'Nigeria': 'USD',         'Norway': 'NOK',
+  'Oman': 'AED',          'Pakistan': 'USD',        'Peru': 'USD',
+  'Philippines': 'PHP',   'Poland': 'EUR',          'Portugal': 'EUR',
+  'Qatar': 'AED',         'Romania': 'EUR',         'Russia': 'USD',
+  'Saudi Arabia': 'AED',  'Senegal': 'USD',         'Serbia': 'EUR',
+  'Singapore': 'SGD',     'South Africa': 'ZAR',   'South Korea': 'KRW',
+  'Spain': 'EUR',         'Sri Lanka': 'INR',       'Sweden': 'SEK',
+  'Switzerland': 'CHF',   'Taiwan': 'USD',          'Tajikistan': 'USD',
+  'Tanzania': 'USD',      'Thailand': 'THB',        'Turkey': 'TRY',
+  'Turkmenistan': 'USD',  'Uganda': 'USD',          'Ukraine': 'USD',
+  'United Arab Emirates': 'AED', 'United Kingdom': 'GBP', 'United States': 'USD',
+  'Uzbekistan': 'USD',    'Vietnam': 'VND',         'Yemen': 'USD',
+  'Zimbabwe': 'ZAR',
+};
+
 const _setupCountries = [
   'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Armenia', 'Australia',
   'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Belgium', 'Bhutan',
@@ -2482,11 +2516,25 @@ class _CountrySetupSheetState extends ConsumerState<_CountrySetupSheet> {
   String? _selected;
   bool _saving = false;
 
+  Future<void> _showPicker() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _SetupCountryPicker(),
+    );
+    if (result != null) setState(() => _selected = result);
+  }
+
   Future<void> _save() async {
     if (_selected == null) return;
     setState(() => _saving = true);
     try {
-      await ref.read(authServiceProvider).updateProfile({'homeCountry': _selected!});
+      final currency = _countryCurrencyMap[_selected!] ?? 'USD';
+      await ref.read(authServiceProvider).updateProfile({
+        'homeCountry': _selected!,
+        'currency': currency,
+      });
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) setState(() => _saving = false);
@@ -2497,6 +2545,7 @@ class _CountrySetupSheetState extends ConsumerState<_CountrySetupSheet> {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom +
         MediaQuery.of(context).viewPadding.bottom;
+    final isSelected = _selected != null;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -2558,44 +2607,46 @@ class _CountrySetupSheetState extends ConsumerState<_CountrySetupSheet> {
             ],
           ),
           const SizedBox(height: 20),
-          // Country dropdown
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.lightBackground,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _selected != null
-                    ? AppColors.primary
-                    : AppColors.lightOutline,
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selected,
-                isExpanded: true,
-                hint: const Text(
-                  'Select your home country',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 14,
-                    color: AppColors.lightOnSurfaceVar,
-                  ),
-                ),
-                icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.lightOnSurfaceVar),
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.navy,
-                ),
-                dropdownColor: Colors.white,
+          // Country picker — tappable row that opens a searchable sheet
+          GestureDetector(
+            onTap: _showPicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              decoration: BoxDecoration(
+                color: AppColors.lightBackground,
                 borderRadius: BorderRadius.circular(14),
-                items: _setupCountries
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selected = v),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.lightOutline,
+                  width: isSelected ? 1.5 : 1.0,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Text('🌍', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _selected ?? 'Select your home country',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected
+                            ? AppColors.navy
+                            : AppColors.lightOnSurfaceVar,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    isSelected
+                        ? Icons.check_circle_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.lightOnSurfaceVar,
+                    size: 22,
+                  ),
+                ],
               ),
             ),
           ),
@@ -2633,6 +2684,169 @@ class _CountrySetupSheetState extends ConsumerState<_CountrySetupSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── SEARCHABLE COUNTRY PICKER SHEET ─────────────────────────────────────────
+
+class _SetupCountryPicker extends StatefulWidget {
+  const _SetupCountryPicker();
+
+  @override
+  State<_SetupCountryPicker> createState() => _SetupCountryPickerState();
+}
+
+class _SetupCountryPickerState extends State<_SetupCountryPicker> {
+  final _searchCtrl = TextEditingController();
+  late List<String> _filtered;
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = _setupCountries;
+    _searchCtrl.addListener(_onSearch);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.removeListener(_onSearch);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onSearch() {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    setState(() {
+      _filtered = q.isEmpty
+          ? _setupCountries
+          : _setupCountries.where((c) => c.toLowerCase().contains(q)).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).viewInsets.bottom;
+    final screenH = MediaQuery.of(context).size.height;
+
+    return Container(
+      height: (screenH * 0.75 - bottomPad).clamp(280.0, screenH * 0.75),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+          children: [
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(30),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Text('🌍', style: TextStyle(fontSize: 22)),
+                  SizedBox(width: 10),
+                  Text(
+                    'Select Home Country',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.lightBackground,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.lightOutline),
+                ),
+                child: TextField(
+                  controller: _searchCtrl,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                    color: AppColors.navy,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'Search country…',
+                    hintStyle: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 14,
+                      color: AppColors.lightOnSurfaceVar,
+                    ),
+                    prefixIcon: Icon(Icons.search_rounded,
+                        color: AppColors.lightOnSurfaceVar, size: 20),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            Expanded(
+              child: _filtered.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('🔍', style: TextStyle(fontSize: 36)),
+                          SizedBox(height: 10),
+                          Text(
+                            'No countries found',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 14,
+                              color: AppColors.lightOnSurfaceVar,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.only(top: 4, bottom: 16),
+                      itemCount: _filtered.length,
+                      separatorBuilder: (_, __) => const Divider(
+                          height: 1,
+                          indent: 20,
+                          endIndent: 20,
+                          color: Color(0xFFF1F5F9)),
+                      itemBuilder: (context, i) {
+                        final country = _filtered[i];
+                        return InkWell(
+                          onTap: () => Navigator.of(context).pop(country),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 14),
+                            child: Text(
+                              country,
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.navy,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
     );
   }
 }

@@ -12,8 +12,15 @@ service cloud.firestore {
 
     // ── Users ──────────────────────────────────────────────────────────────
     match /users/{userId} {
-      allow read:   if isAuth();
+      allow read:   if isOwner(userId);
       allow write:  if isOwner(userId);
+
+      // Public profile — display name and avatar only, readable by any auth user.
+      // Add this subcollection when a feature needs to show another user's name/avatar.
+      match /public/{doc} {
+        allow read:  if isAuth();
+        allow write: if isOwner(userId);
+      }
 
       // ── Trips (moved from root /trips) ──────────────────────────────────
       match /trips/{tripId} {
@@ -149,6 +156,15 @@ service cloud.firestore {
       allow read:   if isOwner(resource.data.userId);
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if isOwner(resource.data.userId);
+    }
+
+    // ── Public Profiles (cross-user name/avatar lookup) ────────────────────
+    // Contains only: displayName, photoUrl, emailHash — no plain email or
+    // sensitive fields. emailHash is SHA-256(trim+lowercase email), used
+    // to resolve a share-by-email invite without exposing raw addresses.
+    match /publicProfiles/{userId} {
+      allow read:  if isAuth();
+      allow write: if isOwner(userId);
     }
   }
 }
